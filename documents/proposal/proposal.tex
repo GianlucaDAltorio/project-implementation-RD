@@ -1,1 +1,39 @@
+\documentclass[conference]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{algorithm}
+\usepackage{algpseudocode} 
+\usepackage{hyperref}
+\usepackage{enumitem}
 
+% Title creation and placement.
+\title{Proposal Document for Project I}
+\author{
+    \IEEEauthorblockN{Gianluca D'Altorio}
+    \IEEEauthorblockA{Department of Computer Engineering Technology\\
+    Vanier College}
+}\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Problem Statement and User Need}
+
+As people age, day-to-day tasks that were once routine become increasingly difficult, yet many older adults choose to live independently despite this.  An elderly person living alone who falls has no reliable way of summoning help, and caregivers or family members have no way of knowing something happened until it's too late.
+
+This gap affects three primary groups directly: the elderly individual living alone, who bears the immediate risk of a fall, the caregiver or family member that is directly responsible for their well being, and the care facility who need to keep constant track of their patients.  Table~\ref{tab:needs} lists the possible needs of every stakeholder:
+
+\input{table1_stakeholder_needs}
+
+\textbf{Objective} -- The system shall detect at least $90\%$ of falls occurring during monitored testing on held-out data.
+
+\section{Scope and System Context}
+
+Meeting these needs requires deciding, upfront, what this system will and will not attempt in this term to ensure completion.  Table~\ref{tab:scope} lists what is built agianst the nearest capability deliberately left out, so that the boundary of the prototype is explicit rather than assumed. 
+
+\input{table2_scope}
+
+\end{document}
