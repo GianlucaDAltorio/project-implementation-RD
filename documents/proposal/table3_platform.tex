@@ -1,0 +1,23 @@
+\begin{table}[!ht]
+\centering
+\small
+\caption{Platform limits touched by this project, tagged as constraints.}
+\label{tab:platform}
+\begin{tabularx}{\linewidth}{
+  @{}>{\raggedright\arraybackslash}p{0.06\linewidth}
+    >{\raggedright\arraybackslash}p{0.28\linewidth}
+    >{\raggedright\arraybackslash}p{0.15\linewidth}
+    >{\raggedright\arraybackslash}X@{}}
+\toprule
+ID & Limit & Source & Rationale \\
+\midrule
+C1 & 6-axis IMU (wrist) & Vendor wiki & Fixed sensing hardware the wrist-side fall classifier runs on. \\
+\addlinespace
+C2 & Bluetooth 5 (LE) & Vendor wiki & Fixed radio the watch to PCB validation link and alert-to-broker path depend on. \\
+\addlinespace
+C3 & 2.4 GHz Wi-Fi (802.11 b/g/n) & Datasheet & Fixed radio for the MQTT alert path to the computer. \\
+\addlinespace
+C4 & ESP32-S3R8, dual core, up to 240\,MHz & Vendor wiki & Fixed processing budget the on-device fall classifier must run within, in real time. \\
+\bottomrule
+\end{tabularx}
+\end{table}

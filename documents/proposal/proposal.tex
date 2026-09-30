@@ -21,6 +21,7 @@
 \maketitle
 
 \section{Problem Statement and User Need}
+\label{sec:problem}
 
 As people age, day-to-day tasks that were once routine become increasingly difficult, yet many older adults choose to live independently despite this.  An elderly person living alone who falls has no reliable way of summoning help, and caregivers or family members have no way of knowing something happened until it's too late.
 
@@ -28,12 +29,38 @@ This gap affects three primary groups directly: the elderly individual living al
 
 \input{table1_stakeholder_needs}
 
-\textbf{Objective} -- The system shall detect at least $90\%$ of falls occurring during monitored testing on held-out data.
+Taken together, these needs point to one measurable target for the system as a whole, stated below as the project objective:\\
+
+\textbf{Objective --} Detect at least $90\%$ of real falls and deliver a confirmed alert to the caregiver/family and care facility within 30 seconds, while keeping the false-alarm rate below $5\%$ across tested activities.
 
 \section{Scope and System Context}
+\label{sec:scope}
 
 Meeting these needs requires deciding, upfront, what this system will and will not attempt in this term to ensure completion.  Table~\ref{tab:scope} lists what is built agianst the nearest capability deliberately left out, so that the boundary of the prototype is explicit rather than assumed. 
 
 \input{table2_scope}
+
+Figure~\ref{fig:context} shows the system as a single boundary containing the fall-detection system, with no internal structure drawn at this stage.  The wearer's motion crosses into the system, and a confirmed alert crosses out to a computer running an MQTT broker, which pushes the notification to a caregiver-facing dashboard.  Two further stakeholders, the caregiver/family member and the care facility, sit downstream of the dashboard and are each reached independently.
+
+% Figure 1.
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/generated/context_diagram.pdf}
+    \caption{System context diagram.  The wearer's motion enters the system for processing, 
+    and is then moved downstream to the remaining stakeholders.}
+    \label{fig:context}
+\end{figure}
+
+Two stakeholders behind this diagram want different things from the same design decision.  The wearer's success criterion is retaining the ability to cancel a false trigger before anyone is bothered (N2); the caregiver's is being notified the instant a fall occurs, with no delay standing between a real emergency and their response (N4).  These two criteria collide directly: any nonzero cancel window granted to the wearer is time subtracted from how quickly the caregiver can be alerted to a genuine fall.  No single window length fully satisfies both, and resolving this trade-off, choosing and defending a specific cancel-window duration, is one of the provisional requirements addressed in Section~\ref{sec:requirements}
+
+\section{Platform and Custom Hardware}
+\label{sec:platform}
+
+The watch imposes several fixed limits on this design.  Table~\ref{tab:platform} lists only the specifications this project actually touches, each tagged with its source and marked as a constraint.
+
+\input{table3_platform}
+
+The custom hardware is a waist-worn protoboard carrying its own microcontroller with an integrated BLE radio, a 6-axis IMU, and a barometric pressure sensor powered independently of the watch.  Since it is worn seperately rather than physically attached, it cannot reach the watch's I2C, UART, or USB expansion pads; instead, the two devices exchange fall-event and validation data wirelessly over Bluetooth Low Energy.  This link is the subject of REQ-FD-XX in Section~\ref{sec:requirements}, which bounds how quickly a candidate fall event must reach the watch for validation.
+
 
 \end{document}
