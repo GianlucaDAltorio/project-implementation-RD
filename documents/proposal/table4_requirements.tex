@@ -1,0 +1,27 @@
+\begin{table*}[!ht]
+\centering
+\caption{Provisional requirements (all unverified; marked provisional).}
+\label{tab:requirements}
+\footnotesize
+\renewcommand{\arraystretch}{0.95}
+\begin{tabularx}{\linewidth}{@{}
+  >{\raggedright\arraybackslash}p{0.072\linewidth}
+  >{\raggedright\arraybackslash}p{0.07\linewidth}
+  >{\raggedright\arraybackslash}p{0.22\linewidth}
+  >{\raggedright\arraybackslash}p{0.28\linewidth}
+  >{\raggedright\arraybackslash}p{0.22\linewidth}
+  >{\raggedright\arraybackslash}p{0.038\linewidth}@{}}
+\toprule
+ID & Class & Statement & Rationale & Method / acceptance & Need \\
+\midrule
+REQ-FD-01 & Functional & Initiate caregiver alert on fall detection, no wearer action required. & Core promise of N1. & Demo: alert on simulated fall, $N=10$ trials. & N1 \\
+REQ-FD-02 & Performance & Deliver confirmed alert within 30\,s, incl.\ over a degraded link. & 30\,s is composed of the 15\,s cancel window (REQ-FD-04) plus a 15\,s margin reserved for transmission and processing, bounding total latency even under a degraded link. & Test: detection-to-receipt delta, $N=20$ trials, strong/weak link. & N4, N7 \\
+REQ-FD-03 & Performance & Achieve a miss rate of at most 5\% and a false-alarm rate below 10\% across tested activities, prioritizing detection sensitivity over false-alarm suppression. & Missing a real fall is a more serious failure mode than a false alarm, reflected in the project objective; the 5\% miss bound matches the 95\% detection target, and the 10\% false-alarm ceiling is accepted as the cost of prioritizing sensitivity. & Test: miss rate = false negatives / total fall trials; false-alarm rate = false positives / total non-fall trials, $N=20$ held-out trials per category. & N1, N2, N3, N4 \\
+REQ-FD-04 & Interface & Cancel a pending alert via single button press within 15\,s. & 15\,s is half the 30\,s delivery budget (REQ-FD-02); resolves wearer/caregiver collision (Sec.~\ref{sec:scope}). & Test: elapsed time from trigger to cancel press, $N=10$ trials; alert suppressed only within window. & N2 \\
+REQ-FD-05 & Functional & Escalate alert severity after 60\,s with no post-fall motion. & 60\,s is roughly 3$\times$ a typical 10--20\,s recovery from a minor stumble, avoiding escalation on ordinary recoveries while remaining clinically meaningful. & Test: elapsed time to escalation, $N=10$ trials; fires/withholds correctly by condition. & N5 \\
+REQ-FD-06 & Constraint & Added hardware cost shall not exceed \$45. & Caregiver's stated cost concern (N6); based on typical costs for an MCU with BLE, a 6-axis IMU, a barometric sensor, a battery, and passives. & Inspection: itemized receipts $\leq$ cap. & N6 \\
+REQ-FD-07 & Interface & PCB transmits candidate fall event to watch within 200\,ms over BLE. & 200\,ms is under 1\% of the 30\,s total delivery budget (REQ-FD-02), making this link's contribution to end-to-end latency negligible. & Test: PCB-to-watch timestamp delta, $N=10$ trials. & N1 \\
+REQ-FD-08 & Buildability & Firmware builds/flashes from a clean checkout, one command, no edits. & Reproducibility (N8); commonly forgotten class. & Demo: build succeeds on a second machine. & N8 \\
+\bottomrule
+\end{tabularx}
+\end{table*}

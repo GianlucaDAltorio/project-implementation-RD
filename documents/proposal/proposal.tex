@@ -20,6 +20,7 @@
 \begin{document}
 \maketitle
 
+% Section 1: Problem Statement and User Need
 \section{Problem Statement and User Need}
 \label{sec:problem}
 
@@ -31,8 +32,9 @@ This gap affects three primary groups directly: the elderly individual living al
 
 Taken together, these needs point to one measurable target for the system as a whole, stated below as the project objective:\\
 
-\textbf{Objective --} Detect at least $90\%$ of real falls and deliver a confirmed alert to the caregiver/family and care facility within 30 seconds, while keeping the false-alarm rate below $5\%$ across tested activities.
+\textbf{Objective --} Prioritizing missed falls is the more serious failure mode: detect at least $95\%$ of real falls (miss rate $\leq 5\%$) and deliver a confirmed alert to the caregiver/family and care facility within 30 seconds, accepting a higher tolerance for false alarms ($\leq 10\%$) in exchange.
 
+% Section 2: Scope and System Context
 \section{Scope and System Context}
 \label{sec:scope}
 
@@ -53,6 +55,7 @@ Figure~\ref{fig:context} shows the system as a single boundary containing the fa
 
 Two stakeholders behind this diagram want different things from the same design decision.  The wearer's success criterion is retaining the ability to cancel a false trigger before anyone is bothered (N2); the caregiver's is being notified the instant a fall occurs, with no delay standing between a real emergency and their response (N4).  These two criteria collide directly: any nonzero cancel window granted to the wearer is time subtracted from how quickly the caregiver can be alerted to a genuine fall.  No single window length fully satisfies both, and resolving this trade-off, choosing and defending a specific cancel-window duration, is one of the provisional requirements addressed in Section~\ref{sec:requirements}
 
+% Section 3: Platform and Custom Hardware
 \section{Platform and Custom Hardware}
 \label{sec:platform}
 
@@ -60,7 +63,42 @@ The watch imposes several fixed limits on this design.  Table~\ref{tab:platform}
 
 \input{table3_platform}
 
-The custom hardware is a waist-worn protoboard carrying its own microcontroller with an integrated BLE radio, a 6-axis IMU, and a barometric pressure sensor powered independently of the watch.  Since it is worn seperately rather than physically attached, it cannot reach the watch's I2C, UART, or USB expansion pads; instead, the two devices exchange fall-event and validation data wirelessly over Bluetooth Low Energy.  This link is the subject of REQ-FD-XX in Section~\ref{sec:requirements}, which bounds how quickly a candidate fall event must reach the watch for validation.
+The custom hardware is a waist-worn protoboard carrying its own microcontroller with an integrated BLE radio, a 6-axis IMU, and a barometric pressure sensor powered independently of the watch.  Since it is worn separately rather than physically attached, it cannot reach the watch's I2C, UART, or USB expansion pads; instead, the two devices exchange fall-event and validation data wirelessly over Bluetooth Low Energy.  This link is the subject of REQ-FD-07 in Section~\ref{sec:requirements}, which bounds how quickly a candidate fall event must reach the watch for validation.
 
+% Section 4: Provisional Requirements
+\section{Provisional Requirements}
+\label{sec:requirements}
+
+Table~\ref{tab:requirements} lists eight provisional requirements derived from the needs in Section~\ref{sec:problem}, covering all five requirement classes. Each is marked provisional, since none has yet been tested; Section~\ref{sec:uncertainties} treats the numeric bounds still resting on unvalidated assumptions as uncertainties to be resolved before Stage~1.
+
+\textbf{Trial counts.} Rate-based criteria (REQ-FD-03) use $N=20$ trials per category, since at this count each trial corresponds to a $5\%$ increment, matching the resolution of the stated miss-rate threshold. Binary pass/fail requirements (REQ-FD-01, REQ-FD-04, REQ-FD-05, REQ-FD-07, REQ-FD-08) use $N=10$ repetitions, enough to catch an intermittent failure (a dropped connection, a timing race) without requiring the statistical power a rate claim needs.
+
+\textbf{A note on these thresholds.} The numeric bounds in REQ-FD-02, REQ-FD-03, REQ-FD-05, REQ-FD-06, and REQ-FD-07 are each derived from a stated assumption or an existing figure in this table, not asserted without reasoning, but none has yet been validated by measurement. REQ-FD-06's cost cap, in particular, rests on a rough component estimate rather than an actual quotation. Any revision made after PoC testing or further research will be recorded as a new dated logbook entry.
+
+% Section 5: Uncertainties and the PoC Plan
+\section{Uncertainties and the PoC Plan}
+\label{sec:uncertainties}
+
+Three uncertainties are ranked below by how much of the design would collapse if the underlying assumption proved false, per the course guide's own rule for ranking.  Each is written as a register entry; the single PoC plan attacks the highest-ranked uncertainty first.
+
+\textbf{PoC Plan.} The highest-ranked uncertainty, R1, is attacked first, since it would most undermine the design if wrong. \emph{Question:} what false-alarm and miss rates occur in the system when combining independent fall signals from two separate sensors, and does a confirmed fall reach its destination in time, even over a poor connection? \emph{Measure:} (a) false-alarm and miss rates on held-out data from a labeled set of scripted falls and confusable activities (sitting heavily, lying down, stairs), held out by session and, where possible, by person; (b) detection-to-dashboard delivery time and success rate at strong and weak link strength, and the system's behavior when the link is lost. \emph{Pass criterion, fixed in advance:} the miss rate is at most 5\%, the false-alarm rate is below 10\% (REQ-FD-03), and every confirmed fall is delivered within 30\,s (REQ-FD-02) in all link conditions tested.
+
+\input{table4_requirements}
+\input{table5_uncertainties}
+
+% Section 6: Assumptions and the Logbook
+\section{Assumptions and the Logbook}
+\label{sec:assumptions}
+
+\textbf{Assumptions.} This design rests on several claims taken as true but not
+yet tested:
+
+\begin{itemize}[leftmargin=*]
+\item Falls performed by healthy volunteers under scripted, controlled conditions are assumed to produce IMU and barometric signatures representative of an actual elderly fall.
+\item Bluetooth Low Energy connectivity between a wrist-worn watch and a waist-worn custom PCB is assumed to remain reliable at typical in-home separation distances between the two devices.
+\item The watch's processing budget (C4) is assumed sufficient to run the on-device fall classifier and corroboration logic within the real-time constraints implied by REQ-FD-07's 200\,ms target.
+\end{itemize}
+
+\textbf{AI-Assisted Steps.} An AI assistant was used throughout drafting to help interrogate needs into measurable requirements, classify requirements by type, check scope and needs for internal consistency, and review wording against the course guide's own rules (e.g., the Test-versus-Demonstration distinction, and the requirement that every requirement trace to a recorded need). Every AI-suggested number, rationale, and requirement statement was reviewed by the author and checked against the guide's examples before inclusion; the honest, unvalidated status of REQ-FD-02, REQ-FD-03, REQ-FD-05, and REQ-FD-06's numeric bounds (Section~4) reflects that review, rather than a figure accepted uncritically.
 
 \end{document}
