@@ -1,0 +1,32 @@
+% Source file for Table 1.
+% Required in order for the reference in "proposal.tex" to work properly.
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{0.85}
+\setlength{\tabcolsep}{3pt}
+\caption{Provisional user needs, by stakeholder.}
+\label{tab:needs}
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+\toprule
+ID & Need \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{User (Wearer)}} \\
+N1 & ``If I fall and can't get up, I need help to come without me having to do anything.'' \\
+N2 & ``I want to be able to cancel an alert if I am fine before anyone is bothered.'' \\
+N3 & ``I don't want to feel as though I am constantly being watched.'' \\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{Caregiver / Family}} \\
+N4 & ``I need to be notified immediately if something happens.'' \\
+N5 & ``I want to know if they are incapacitated after the fall.'' \\
+N6 & ``I don't want to spend so much money on this device.'' \\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{Care Facility}} \\
+N7 & ``I need alerts to be routed reliably so that response protocols are followed.'' \\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{Personal}} \\
+N8 & ``The device firmware needs to be reproducible on new devices without editing the source.'' \\
+\bottomrule
+\end{tabularx}
+\end{table}

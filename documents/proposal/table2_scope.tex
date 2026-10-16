@@ -1,0 +1,22 @@
+% Source file for Table 2.
+% Required in order for the reference in "proposal.tex" to work properly.
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{0.85}
+\setlength{\tabcolsep}{3pt}
+\caption{Scope of the proposed prototype.}
+\label{tab:scope}
+\begin{tabularx}{\linewidth}{@{}X X@{}}
+\toprule
+In Scope & Out of Scope \\
+\midrule
+Wrist IMU-based fall detection (watch). & Detecting other health events (seizures, cardiac events, etc). \\
+\addlinespace
+Waist IMU and barometric sensing (custom board). & Additional sensors (impact, heart rate, microphone, etc). \\
+\addlinespace
+Low-fidelity prototype development (breadboard/protoboard). & Custom PCB fabrication, enclosure, volume manufacturing costing and economics. \\
+\bottomrule
+\end{tabularx}
+\end{table}

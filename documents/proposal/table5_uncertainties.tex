@@ -1,0 +1,27 @@
+% Source file for Table 5.
+% Required in order for the reference in "proposal.tex" to work properly.
+
+\begin{table}[!ht]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{0.85}
+\setlength{\tabcolsep}{2.5pt}
+\caption{Ranked uncertainty register.}
+\label{tab:uncertainties}
+\begin{tabularx}{\linewidth}{@{}
+  >{\raggedright\arraybackslash}p{0.02\linewidth}
+  >{\raggedright\arraybackslash}p{0.19\linewidth}
+  >{\raggedright\arraybackslash}p{0.15\linewidth}
+  >{\raggedright\arraybackslash}p{0.15\linewidth}
+  >{\raggedright\arraybackslash}p{0.05\linewidth}
+  >{\raggedright\arraybackslash}p{0.175\linewidth}
+  >{\raggedright\arraybackslash}p{0.175\linewidth}@{}}
+\toprule
+ID & Statement & Assumption & Consequence & Prob. & Evidence Required & Mitigation \\
+\midrule
+R1 & May not meet miss/false-alarm targets on new people/sessions. & Thresholds tuned on development sessions carry over. & Falls go undetected, or wearer stops wearing the device. & Likely & Rates on held-out sessions + $\geq$1 new person, vs.\ pass criterion. & Retune combination rule or widen training set. \\
+R2 & 60\,s inactivity may not separate incapacitation from deliberate rest. & No motion 60\,s = meaningful incapacitation proxy. & REQ-06 falsely escalates or fails to escalate. & Likely & Scripted ``rest'' vs.\ ``recover'' trials, check escalation. & Retune window based on measurements during testing. \\
+R3 & BLE latency on a moving body may exceed 200\,ms sub-budget (REQ-02). & Bench latency representative of worn, moving use. & Delivery exceeds 25\,s, or time split needs revision. & Unlikely & Timestamp $\Delta$, both devices worn, in motion. & Re-split budget, or tune BLE connection parameters. \\
+\bottomrule
+\end{tabularx}
+\end{table}
