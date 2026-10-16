@@ -1,24 +1,27 @@
-\begin{table*}[!ht]
+% Source file for Table 5.
+% Required in order for the reference in "proposal.tex" to work properly.
+
+\begin{table}[!ht]
 \centering
-\footnotesize
-\renewcommand{\arraystretch}{0.95}
-\setlength{\tabcolsep}{3pt}
+\scriptsize
+\renewcommand{\arraystretch}{0.85}
+\setlength{\tabcolsep}{2.5pt}
 \caption{Ranked uncertainty register.}
 \label{tab:uncertainties}
 \begin{tabularx}{\linewidth}{@{}
-  >{\raggedright\arraybackslash}p{0.025\linewidth}
+  >{\raggedright\arraybackslash}p{0.02\linewidth}
   >{\raggedright\arraybackslash}p{0.19\linewidth}
-  >{\raggedright\arraybackslash}p{0.155\linewidth}
-  >{\raggedright\arraybackslash}p{0.155\linewidth}
-  >{\raggedright\arraybackslash}p{0.045\linewidth}
-  >{\raggedright\arraybackslash}p{0.17\linewidth}
-  >{\raggedright\arraybackslash}p{0.17\linewidth}@{}}
+  >{\raggedright\arraybackslash}p{0.15\linewidth}
+  >{\raggedright\arraybackslash}p{0.15\linewidth}
+  >{\raggedright\arraybackslash}p{0.05\linewidth}
+  >{\raggedright\arraybackslash}p{0.175\linewidth}
+  >{\raggedright\arraybackslash}p{0.175\linewidth}@{}}
 \toprule
-ID & Statement & Assumption & Consequence & Prob. & Evidence required & Mitigation \\
+ID & Statement & Assumption & Consequence & Prob. & Evidence Required & Mitigation \\
 \midrule
-R1 & The system may not meet the miss-rate and false-alarm targets together on data from people and sessions it was not tuned on. & Decision thresholds tuned on development sessions carry over to new wearers and sessions. & Objective missed: falls go undetected, or the wearer is bothered enough to stop wearing the device. & Unk. & False-alarm and miss rates measured on held-out sessions and at least one additional person, against the pass criterion. & If the PoC fails, retune the rule for combining the two signals or widen the training set. \\
-R2 & 60\,s of post-fall inactivity may not reliably separate genuine incapacitation from a wearer resting deliberately. & Absence of motion for 60\,s after a confirmed fall is a meaningful proxy for incapacitation. & REQ-FD-05 could falsely escalate harmless events or fail to escalate a real emergency. & Unk. & Scripted trials of ``fall then rest'' vs.\ ``fall then recover,'' checked against escalation firing correctly. & Combine inactivity with a second signal, or retune the window based on measured separation. \\
-R3 & BLE round-trip latency, worn on a moving body, may exceed the 200\,ms sub-budget assumed in REQ-FD-07. & Bench-measured BLE latency is representative of latency with both devices worn and the body in motion. & Total delivery time could exceed the 30\,s target (REQ-FD-02), or the cancel/detection time split would need revision. & Unk. & Timestamp-delta measurement with both devices worn during normal movement, not bench-only. & Re-split the 15\,s/30\,s budget, or tune BLE connection parameters to cut latency. \\
+R1 & May not meet miss/false-alarm targets on new people/sessions. & Thresholds tuned on development sessions carry over. & Falls undetected, or wearer stops wearing device. & Likely & Rates on held-out sessions + $\geq$1 new person, vs.\ pass criterion. & Retune combination rule or widen training set. \\
+R2 & 60\,s inactivity may not separate incapacitation from deliberate rest. & No motion 60\,s = meaningful incapacitation proxy. & REQ-06 falsely escalates or fails to escalate. & Likely & Scripted ``rest'' vs.\ ``recover'' trials, check escalation. & Combine with 2nd signal, or retune window. \\
+R3 & BLE latency on a moving body may exceed 200\,ms sub-budget (REQ-02). & Bench latency representative of worn, moving use. & Delivery exceeds 25\,s, or time split needs revision. & Unlikely & Timestamp $\Delta$, both devices worn, in motion. & Re-split budget, or tune BLE connection params. \\
 \bottomrule
 \end{tabularx}
-\end{table*}
+\end{table}
