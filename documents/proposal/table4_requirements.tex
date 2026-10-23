@@ -19,13 +19,13 @@
 ID & Class & Statement & Rationale & Method/Acceptance & Need \\
 \midrule
 REQ-FD-01 & Func. & An alert shall be initiated on fall, no wearer action required. & A fall can incapacitate the wearer instantly, help can't depend on their own input (N1). & Demo: alert on sim.\ fall, $N{=}10$. & N1 \\
-REQ-FD-02 & Perf. & Alert shall be delivered within 25\,s, including over a degraded link. & 25\,s = 15\,s cancel (REQ-05) + 10\,s margin; board$\to$watch sub-link budgeted 200\,ms ($<$1\% of total). & Test: detect-to-receipt $\Delta$, $N{=}20$, strong/weak link; board$\to$watch $\Delta$ separately. & N1,4,7 \\
+REQ-FD-02 & Perf. & Alert shall be delivered within 25\,s, including over a degraded link. & 25\,s = 15\,s cancel (REQ-05) + 10\,s margin; board$\to$watch sub-link budgeted 200\,ms ($<$1\% of total). & Test: detect-to-receipt $\Delta$, $N{=}20$, strong/weak link; board$\to$watch $\Delta$ separately. & N1,4,6 \\
 REQ-FD-03 & Perf. & Miss rate shall be $\leq 5\%$ across tested activities. & Missed falls are worse than false alarms, per objective; 5\% matches 95\% target. & Test: false negatives / fall trials, $N{=}20$ held-out. & N1,4 \\
-REQ-FD-04 & Perf. & False-alarm rate shall be $< 10\%$ across tested activities. & Loose enough to avoid suppressing true detections (REQ-03); still bounds nuisance interruptions to roughly 1 in 10 activities. & Test: false pos.\ / non-fall trials, $N{=}20$ held-out. & N2,3 \\
+REQ-FD-04 & Perf. & False-alarm rate shall be $< 10\%$ across tested activities. & Loose enough to avoid suppressing true detections (REQ-03); still bounds nuisance interruptions to roughly 1 in 10 activities. & Test: false pos.\ / non-fall trials, $N{=}20$ held-out. & N3 \\
 REQ-FD-05 & Interf. & User shall be able to cancel a pending alert via a button within 15\,s. & Fixed independently as the wearer-reaction window, 15\,s of the 25\,s budget (REQ-02). Resolves wearer/caregiver collision (Sec.~\ref{sec:scope}). & Test: trigger-to-press $\Delta$, $N{=}10$; cancels only within window. & N2 \\
 REQ-FD-06 & Func. & Severity shall be escalated after 60\,s of no post-fall motion. & $\sim$3$\times$ typical 10--20\,s stumble-recovery time. & Test: $\Delta$ to escalation, $N{=}10$; fires/withholds correctly. & N5 \\
-REQ-FD-07 & Constr. & Added prototyping hardware cost shall be $\leq$ \$175. & Rough BOM estimate for PoC/prototype costs (MCU+BLE, IMU, barometer, battery, passives).  Scoped to current project. & Inspect: receipts $\leq$ PoC/prototype budget cap. & N9 \\
-REQ-FD-08 & Build. & Firmware shall build/flash from a clean checkout, one command, no edits. & Reproducibility (N8); commonly forgotten class. & Demo: build succeeds on 2nd machine. & N8 \\
+REQ-FD-07 & Constr. & Added PoC/prototyping hardware cost shall be $\leq$ \$175. & Rough BOM estimate for PoC/prototype costs (MCU+BLE, IMU, barometer, battery, passives).  Scoped to current project. & Inspect: receipts $\leq$ PoC/prototype budget cap. & N8 \\
+REQ-FD-08 & Build. & Firmware shall build/flash from a clean checkout, no edits. & Reproducibility, commonly forgotten class. & Demo: build succeeds on 2nd machine. & N7 \\
 \bottomrule
 \end{tabularx}
 \end{table}
