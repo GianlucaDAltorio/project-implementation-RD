@@ -101,7 +101,7 @@ def dashed_line(start, end):
 dashed_container((40, 40), 50, 50, "System Boundary")
 
 sys_x, sys_y, sys_w, sys_h = solid_box(
-    (48, 46), 34, 29, "Fall Detection\nSystem\n(watch + custom PCB)")
+    (48, 46), 34, 29, "Fall Detection\nSystem")
 sys_mid_y = sys_y + sys_h / 2
 
 # ---------------------------------------------------------------------
