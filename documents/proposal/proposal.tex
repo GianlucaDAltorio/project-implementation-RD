@@ -32,7 +32,7 @@ This gap affects three primary groups directly: the elderly individual living al
 
 Taken together, these needs point to one measurable target for the system as a whole, stated below as the project objective:\\
 
-\textbf{Objective --} Missed falls are prioritized, as they are the most serious failure mode: detect at least $95\%$ of real falls (miss rate $\leq 5\%$) and deliver a confirmed alert to the caregiver/family and care facility within 25 seconds.
+\textbf{Objective --} The fall detection system should be able to detect at least $95\%$ of real falls (miss rate $\leq 5\%$) and deliver a confirmed alert to the caregiver/family and care facility within 25 seconds.
 
 % Section 2: Scope and System Context
 \section{Scope and System Context}
@@ -52,7 +52,7 @@ Figure~\ref{fig:context} shows the system as a single boundary containing the fa
     \label{fig:context}
 \end{figure}
 
-Two stakeholders behind this diagram want different things from the same design decision. The wearer's success criterion is retaining the ability to cancel a false trigger before anyone is bothered (N2); the caregiver's is being notified the instant a fall occurs, with no delay standing between a real emergency and their response (N4). These two criteria collide directly: any nonzero cancel window granted to the wearer is time subtracted from how quickly the caregiver can be alerted to a genuine fall. No single window length fully satisfies both, and resolving this trade-off is one of the provisional requirements addressed in Section~\ref{sec:requirements}.
+Two stakeholders behind this diagram want different things from the same design decision. The wearer's success criterion is retaining the ability to cancel a false trigger before anyone is bothered (N2); the caregiver's is being notified the instant a fall occurs, with no delay standing between a real emergency and their response (N4). These two criteria collide directly: any nonzero cancel window granted to the wearer is time subtracted from how quickly the caregiver can be alerted to a genuine fall. No single window length fully satisfies both, and finding a middle-ground is one of the provisional requirements addressed in Section~\ref{sec:requirements}.
 
 % Section 3: Platform and Custom Hardware.
 \section{Platform and Custom Hardware}
@@ -62,23 +62,23 @@ The watch imposes several fixed limits on this design. Table~\ref{tab:platform} 
 
 \input{table3_platform}
 
-The custom hardware is a waist-worn protoboard carrying its own microcontroller with an integrated BLE radio, a 6-axis IMU, and a barometric pressure sensor powered independently of the watch. Since it is worn separately rather than physically attached, it cannot reach the watch's I2C, UART, or USB expansion pads; instead, the two devices exchange fall-event and validation data wirelessly over Bluetooth Low Energy. This link is budgeted within REQ-FD-02 in Section~\ref{sec:requirements}, which bounds how quickly a candidate fall event must reach the watch for validation as part of the overall delivery time.
+The custom hardware is a waist-worn board carrying its own microcontroller with an integrated BLE radio, a 6-axis IMU, and a barometric pressure sensor powered independently of the watch. Since it is worn separately rather than physically attached, it cannot reach the watch's I2C, UART, or USB expansion pads; instead, the two devices exchange fall-event and validation data wirelessly over Bluetooth Low Energy. This link is budgeted within REQ-FD-02 in Section~\ref{sec:requirements}, which bounds how quickly a candidate fall event must reach the watch for validation as part of the overall delivery time.
 
 % Section 4: Provisional Requirements.
 \section{Provisional Requirements}
 \label{sec:requirements}
 
-Table~\ref{tab:requirements} lists eight provisional requirements derived from the needs in Section~\ref{sec:problem}, covering all five requirement classes. Each is marked provisional, since none has yet been tested; Section~\ref{sec:uncertainties} treats the numeric bounds still resting on unvalidated assumptions as uncertainties to be resolved before Gate~1.
+Table~\ref{tab:requirements} lists eight provisional requirements derived from the needs in Section~\ref{sec:problem}, covering all five requirement classes. Each is marked provisional, since none has yet been tested; Section~\ref{sec:uncertainties} treats the numeric bounds still resting on unvalidated assumptions as uncertainties to be resolved before Stage Gate~1.
 
 \input{table4_requirements}
 
-\textbf{Trial counts, thresholds, and disclaimers.} Rate and timing-based criteria (REQ-FD-02, REQ-FD-03, REQ-FD-04) use 20 trials per category, since at this count each trial corresponds to a $5\%$ increment, matching the resolution of the stated miss-rate threshold; binary pass/fail requirements (REQ-FD-01, REQ-FD-05, REQ-FD-06) use 10 repetitions, enough to catch an intermittent failure without requiring the statistical power a rate claim needs. Every numeric bound above is derived from a stated assumption or an existing figure in the table rather than asserted without reasoning, but none has yet been validated by measurement.  REQ-FD-07's \$175 cap applies \textbf{only to this term's PoC-stage proof and prototyping}.  Continued development in Project~II incurs an added budget cost, not estimated here as it is not within the scope of this semester's work.
+\textbf{Trial counts, thresholds, and disclaimers.} Rate and timing-based criteria (REQ-FD-02, REQ-FD-03, REQ-FD-04) use 20 trials per category, since at this count each trial corresponds to a $5\%$ increment, matching the resolution of the stated miss-rate threshold; binary pass/fail requirements (REQ-FD-01, REQ-FD-05, REQ-FD-06) use 10 repetitions, enough to catch an intermittent failure without requiring the statistical power a rate claim needs. Every numeric bound above is derived from a stated assumption or an existing figure in the table rather than asserted without reasoning, but none has yet been validated by measurement.  REQ-FD-07's \$200 cap applies \textbf{only to this term's PoC-stage proof and prototyping}.  Continued development in Project~II incurs an added budget cost, not estimated here as it is not within the scope of this semester's work.
 
 % Section 5: Uncertainties and the PoC Plan.
 \section{Uncertainties and the PoC Plan}
 \label{sec:uncertainties}
 
-Three uncertainties are ranked below by how much of the design would collapse if the underlying assumption proved false, per the course guide's own rule for ranking. Each is written as a register entry; the single PoC plan attacks the highest-ranked uncertainty first.
+Three uncertainties are ranked below by how much of the design would collapse if the underlying assumption proved false.  Each is written as a register entry; the single PoC plan attacks the highest-ranked uncertainty first.
 
 \textbf{PoC Plan.} The highest-ranked uncertainty, R1, is attacked first, since it would most undermine the design if wrong. \emph{Question:} On a wearable device, does combining multiple independent acceleration, angular rotation, and pressure signals reliably distinguish real falls from ordinary movement, and does it deliver a notification in time, even over a poor connection? \emph{Measure:} (a) false-alarm and miss rates on held-out data from a labeled set of scripted falls and confusable activities (sitting heavily, lying down, stairs), held out by session and, where possible, by person; (b) detection-to-dashboard delivery time and success rate at strong and weak link strength, and the system's behavior when the link is lost. \emph{Pass criterion:} the miss rate is at most 5\% (REQ-FD-03), the false-alarm rate is below 10\% (REQ-FD-04), and every confirmed fall is delivered within 25\,s (REQ-FD-02) in all link conditions tested.
 
@@ -102,6 +102,6 @@ Three uncertainties are ranked below by how much of the design would collapse if
 
 \textbf{AI-Assisted Steps.} An AI assistant was used throughout drafting to help interrogate needs into measurable requirements, classify requirements by type, check scope and needs for internal consistency, and review wording against the course guide's rules.
 
-Key numbers in this proposal trace to logbook entries L-01 through L-10.
+Key numbers in this proposal trace to logbook entries L-01 through L-11.
 
 \end{document}
