@@ -1,6 +1,6 @@
 # project-implementation-RD
 
-Repository for the research and development work on the 247-519-VA (Project I) capstone project at Vanier College: an ESP32-based smartwatch and custom waist-worn PCB system for fall detection and caregiver alerting.
+Repository for the research and development work on the 247-519-VA (Project I) project at Vanier College: an ESP32-based smartwatch and custom waist-worn system for fall detection and caregiver alerting.
 
 ## Current contents
 
@@ -19,4 +19,4 @@ The written Project Proposal, built in LaTeX.
 
 ## Status
 
-This repository currently holds the proposal stage deliverable (Project Idea Form submission support). No firmware, PCB design files, or PoC testing code exist yet — those begin after proposal approval.
+This repository currently holds the proposal stage deliverable (Project Idea Form submission support). No firmware, PCB design files, or PoC testing code exist yet — these begin after proposal sign-off.
