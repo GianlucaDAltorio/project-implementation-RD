@@ -31,26 +31,28 @@ The written Project Proposal, built in LaTeX.
 
 Requires Python 3 with the packages in `requirements.txt` (tested with Python 3.13, numpy 2.5, pandas 3.0, scipy 1.18, scikit-learn 1.9) and gcc for the parity check. Run from the repository root; the scripts locate files relative to themselves.
 
-1. Create the FallAllD subset as described in `data/fallalld/README.md`.
+1. Create the FallAllD subset as described in `data/fallalld/README.md` (`data/fallalld/my_subset_v2`).
 2. `python src/fall_model/build_features.py` whole-trial features and the subject split to `data/features/features.csv`.
-3. `python src/fall_model/baseline.py` optional whole-trial baseline (waist vs wrist, with and without barometer).
+3. `python src/fall_model/baseline.py` optional whole-trial baseline.
 4. `python src/fall_model/wrist_windows.py` impact windows and the 14 features to `data/features/wrist_windows.csv`.
 5. `python src/fall_model/wrist_classify.py` cross-validated threshold and test-subject evaluation.
-6. `python src/fall_model/export_c.py` trains the deployed model and writes `src/FallDetector_trials/fall_model.h`.
+6. Set `THR` in `src/fall_model/export_c.py` to the threshold printed in step 5, then `python src/fall_model/export_c.py` to train the deployed model and write `src/FallDetector_trials/fall_model.h`.
 7. `python src/fall_model/parity_test/parity_check.py` checks that the C detector matches the Python model.
 
-Model summary: trigger at 2.5 g, window of 1 s before and 2 s after the peak, 14 features, random forest of 100 trees (depth 6), decision threshold 0.26, subjects split 9 train, 3 validation, 3 test. On the three held-out test subjects: 2.8% of 71 falls missed, 9.8% of 338 non-fall trials raised an alarm.
+Model summary (v2): wrist logger, 2,515 trials from 13 subjects, all 79 activities. Trigger at 2.5 g, window of 1 s before and 2 s after the peak, 14 features, random forest of 100 trees (depth 6), decision threshold 0.30. Subjects are split by number: validation 7, 10, 13; test 2, 9, 14. The first model (v1) used 1,541 trials, 45 activities and threshold 0.26.
 
 ## Watch test sessions
 
-`python src/session_analysis/clean_sessions.py` writes the clean logs; `python src/session_analysis/analyze_session.py` scores them.
+`python src/session_analysis/clean_sessions.py` writes the clean logs; `python src/session_analysis/analyze_session.py` scores them. Details are in `data/sessions/README.md`.
 
-| Session | Trials | Result |
-| --- | --- | --- |
-| events_001, real falls | 20 | 19 detected, 1 missed (5.0%) |
-| events_002, non-falls | 10 | 8 false alarms (80%) |
+| Session | Model | Trials | Result |
+| --- | --- | --- | --- |
+| Round 1, real falls | v1 | 20 | 19 detected, 1 missed |
+| Round 1, non-falls | v1 | 10 | 8 false alarms |
+| Round 2, real falls | v2 | 20 | 20 detected |
+| Round 2, non-falls | v2 | 20 | 11 false alarms |
 
-The false-alarm rate is far above the under-10% target on the wearer's wrist. Retraining on the watch's own recordings is the next step.
+The false-alarm rate on the wearer's wrist is far above the under-10% target in both rounds. The false alarms are single sharp impacts followed by stillness. The sample sizes are too small to show that the miss-rate target is met.
 
 ## Status
 
