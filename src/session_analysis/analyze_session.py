@@ -2,13 +2,15 @@
 
 The watch records the trial type itself (one BOOT press = real-fall trial, two presses =
 non-fall trial), so no separate label file is needed. A trial runs from its MARK row until
-the next MARK, at most --window seconds (default 30, the same as the on-screen banner).
+the next MARK, at most the trial window: 15 s (the on-screen banner), or 30 s for the
+round-1 sessions listed in WINDOW_S below, which were recorded with the older firmware.
+--window overrides both.
 
     real-fall trial  with a FALL call inside -> detected,    none -> MISSED
     non-fall trial   with a FALL call inside -> FALSE ALARM, none -> correct
 
 Usage:
-    python analyze_session.py [events.csv ...] [--notes notes.csv] [--window 30] [--void N ...]
+    python analyze_session.py [events.csv ...] [--notes notes.csv] [--window 15] [--void N ...]
 
 With no file arguments every *_clean.csv in data/sessions/clean is scored, followed by
 combined totals. --void ignores the given trial numbers. notes.csv has the columns
@@ -19,14 +21,24 @@ from pathlib import Path
 import pandas as pd
 
 ap = argparse.ArgumentParser()
-ap.add_argument("events", nargs="*"); ap.add_argument("--notes"); ap.add_argument("--window", type=float, default=30.0)
+ap.add_argument("events", nargs="*"); ap.add_argument("--notes"); ap.add_argument("--window", type=float)
 ap.add_argument("--void", type=int, nargs="*", default=[])
 args = ap.parse_args()
 CLEAN = Path(__file__).resolve().parents[2] / "data" / "sessions" / "clean"
 files = args.events or sorted(CLEAN.glob("*_clean.csv"))
 if not files:
     sys.exit(f"no *_clean.csv files found in {CLEAN}")
-W = args.window * 1000
+DEFAULT_WINDOW_S = 15
+WINDOW_S = {"events_001": 30, "events_002": 30}   # round-1 sessions, 30 s firmware
+
+
+def window_ms(path):
+    if args.window:
+        return args.window * 1000
+    stem = Path(path).stem.replace("_clean", "")
+    return WINDOW_S.get(stem, DEFAULT_WINDOW_S) * 1000
+
+
 notes = {}
 if args.notes:
     nt = pd.read_csv(args.notes)
@@ -34,6 +46,7 @@ if args.notes:
 
 
 def score(path):
+    W = window_ms(path)
     ev = pd.read_csv(path)
     if ev.empty or "kind" not in ev: sys.exit(f"{path}: empty events file")
     marks = ev[ev.kind == "MARK"].copy()

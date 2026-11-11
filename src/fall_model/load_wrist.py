@@ -10,7 +10,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
 FS = 238
-SUBSET = ROOT / "data" / "fallalld" / "my_subset"
+SUBSET = ROOT / "data" / "fallalld" / "my_subset_v2"
 FEATURES = ROOT / "data" / "features"
 
 

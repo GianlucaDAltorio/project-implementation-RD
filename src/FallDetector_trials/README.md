@@ -9,3 +9,6 @@ Arduino sketch for the Waveshare ESP32-S3-Touch-AMOLED-2.06 watch.
 Open the `.ino` in the Arduino IDE (the folder name must match the sketch name). Board and
 library settings are listed at the top of the sketch. SD card output is described in
 `data/sessions/README.md`.
+
+Trial behaviour: a trial window lasts 15 s from the mark, and only the first FALL inside a window
+raises an alert; later ones are logged as `suppressed`.

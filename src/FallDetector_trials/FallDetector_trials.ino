@@ -14,6 +14,9 @@
  *   one press                mark a real-fall trial   (yellow banner)
  *   two presses within 0.5 s mark a non-fall trial    (blue banner)
  *
+ * Only the first FALL inside a trial window raises an alert; later ones in the same window
+ * are logged with called = "suppressed". Outside a trial window every FALL raises an alert.
+ *
  * SD card files (n = session number, incremented at each power-up)
  *   /events_nnn.csv   START, MARK, IMPACT, CANCEL and VOID rows; IMPACT rows carry the peak,
  *                     fall probability, decision and the 14 features
@@ -63,7 +66,7 @@ static void sdTask(void *);
 #define CANCEL_SHOW_MS 3000
 #define DOUBLE_PRESS_MS 500     // second press within this time counts as a double press
 #define HOLD_MS 1000            // hold time that voids the current trial
-#define TRIAL_WINDOW_MS 30000   // trial length; analyze_session.py uses the same 30 s
+#define TRIAL_WINDOW_MS 15000   // trial length; analyze_session.py uses the same 15 s
 #define BRIGHTNESS 120         // 0-255
 
 Arduino_DataBus *bus = new Arduino_ESP32QSPI(LCD_CS, LCD_SCLK, LCD_SDIO0, LCD_SDIO1, LCD_SDIO2, LCD_SDIO3);
@@ -85,6 +88,7 @@ static volatile float live_a = 1.0f, live_g = 0.0f, live_rate = 0.0f;
 static volatile uint32_t read_fail = 0;
 static volatile int last_label = 0;          // 0 none, 1 fall trial, 2 non-fall trial
 static volatile uint32_t trial_start_ms = 0;
+static bool trial_fall_called = false;       // a FALL was already called in the current trial
 
 // SD logging buffers
 struct __attribute__((packed)) Rec { uint32_t t_ms; int16_t v[6]; };   // 16 bytes per IMU sample
@@ -118,7 +122,7 @@ static void on_fall_detected() {
 }
 
 static void emit_mark(uint32_t t_ms, bool is_fall_trial) {
-    n_marks++; last_label = is_fall_trial ? 1 : 2; trial_start_ms = t_ms;
+    n_marks++; last_label = is_fall_trial ? 1 : 2; trial_start_ms = t_ms; trial_fall_called = false;
     char line[96];
     snprintf(line, sizeof line, "MARK,%lu,%u,,,%s,,,,,,,,,,,,,,", (unsigned long)t_ms, (unsigned)n_marks, is_fall_trial ? "FALLTRIAL" : "NOFALL");
     log_line(line);
@@ -190,17 +194,22 @@ void loop() {
             sum_g += sqrt((double)gx*gx + (double)gy*gy + (double)gz*gz);
             n_samples++;
             int fell = fd_push(&fd, ax, ay, az, gx, gy, gz);
+            bool suppressed = false;
+            if (fell && last_label != 0 && millis() - trial_start_ms < TRIAL_WINDOW_MS) {
+                if (trial_fall_called) { fell = 0; suppressed = true; }   // one FALL per trial window
+                else trial_fall_called = true;
+            }
             if (fd.n_eval != seen_eval) {                       // a window was just evaluated
                 seen_eval = fd.n_eval;
                 uint32_t id = ev_count + 1;
                 Ev &e = events[ev_count % 4];
                 e.id = id; e.sec = millis() / 1000; e.peak = fd.last_peak_g; e.p = fd.last_prob; e.fall = fell != 0;
                 char line[220]; int n = snprintf(line, sizeof line, "IMPACT,%lu,%u,%.3f,%.4f,%s", (unsigned long)millis(), (unsigned)id,
-                                                 fd.last_peak_g, fd.last_prob, fell ? "FALL" : "ignored");
+                                                 fd.last_peak_g, fd.last_prob, fell ? "FALL" : suppressed ? "suppressed" : "ignored");
                 for (int k = 0; k < 14 && n < (int)sizeof line - 16; k++) n += snprintf(line + n, sizeof line - n, ",%.4f", fd.last_feat[k]);
                 log_line(line);
                 ev_count = id;
-                Serial.printf("# impact #%u %.1f g  p=%.2f  %s\n", (unsigned)id, e.peak, e.p, fell ? "FALL" : "ignored");
+                Serial.printf("# impact #%u %.1f g  p=%.2f  %s\n", (unsigned)id, e.peak, e.p, fell ? "FALL" : suppressed ? "suppressed" : "ignored");
             }
             if (fell) on_fall_detected();
         } else {

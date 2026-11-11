@@ -22,7 +22,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 from load_wrist import FEATURES, ROOT
 
-THR = 0.26
+THR = 0.30
 MODEL_H = ROOT / "src" / "FallDetector_trials" / "fall_model.h"
 
 W = pd.read_csv(FEATURES / "wrist_windows.csv")

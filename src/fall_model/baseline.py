@@ -30,8 +30,13 @@ def rates(y, p):
 res = []
 for dev in ["Waist", "Wrist"]:
     d = df[df.device == dev]
+    if d.empty:
+        continue
     tr, va, te = (d[d.split == k] for k in ("train", "val", "test"))
-    for name, feats in (("IMU only", IMU), ("IMU + barometer", IMU + BAR)):
+    sets = [("IMU only", IMU)]
+    if d[BAR].notna().all().all():
+        sets.append(("IMU + barometer", IMU + BAR))
+    for name, feats in sets:
         rf = RandomForestClassifier(300, class_weight="balanced", min_samples_leaf=2,
                                     random_state=0, n_jobs=2).fit(tr[feats], tr.is_fall)
         pv = rf.predict_proba(va[feats])[:, 1]
