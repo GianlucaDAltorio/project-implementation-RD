@@ -18,7 +18,9 @@ The written Project Proposal, built in LaTeX.
 ### `src/`
 - `context_diagram.py` regenerates the context diagram.
 - `watch_WiFi_OLED_test/` Wi-Fi and display bring-up sketch for the watch.
-- `FallDetector_trials/` watch firmware: IMU sampling at 238 Hz, impact-triggered fall classifier, on-screen status, and SD logging with button-marked test trials.
+- `watch_MQTT_test/` MQTT connection test for the watch: publishes a test alert to the broker on each BOOT press (copy `secrets_example.h` to `secrets.h` first).
+- `FallDetector_trials/` watch firmware: IMU sampling at 238 Hz, impact-triggered fall classifier, 15 s cancel window, MQTT alerts, 60 s post-fall check, on-screen status, and SD logging with button-marked test trials.
+- `dashboard/` Raspberry Pi alert screen (`screen.py`) and a laptop test publisher (`publisher.py`).
 - `fall_model/` training pipeline for the classifier (FallAllD to features to random forest to C header) and a C-versus-Python parity check.
 - `session_analysis/` tools that clean and score the SD card logs from watch test sessions.
 
@@ -54,6 +56,16 @@ Model summary (v2): wrist logger, 2,515 trials from 13 subjects, all 79 activiti
 
 The false-alarm rate on the wearer's wrist is far above the under-10% target in both rounds. The false alarms are single sharp impacts followed by stillness. The sample sizes are too small to show that the miss-rate target is met.
 
+## Alert path
+
+Watch → MQTT over Wi-Fi → Mosquitto broker on the laptop → Raspberry Pi, which subscribes to `pi/dashboard/#` and shows the alert.
+
+1. Broker: in `mosquitto.conf` set `listener 1883` and `allow_anonymous true`, then run `mosquitto -c mosquitto.conf -v`. Allow inbound TCP 1883 in the laptop firewall.
+2. Watch: copy `src/FallDetector_trials/secrets_example.h` to `secrets.h` in the same folder and fill in the Wi-Fi name, password and the laptop's IPv4 address. `secrets.h` is not committed. Build settings are at the top of the sketch.
+3. Pi: set `BROKER` in `src/dashboard/screen.py` to the laptop's address, then `pip install paho-mqtt` and `python3 screen.py`.
+
+After a detected fall the watch waits 15 s for a BOOT cancel, then publishes the alert. It then watches for wrist movement: 60 s in a row with none publishes an escalation. A BOOT press after the alert is sent tells the dashboard the wearer is OK. Message formats are in `src/FallDetector_trials/README.md`; the Pi logs every alert to `alerts_log.csv` with its delay since detection.
+
 ## Status
 
-The proof-of-concept wrist detector runs on the watch and logs test trials to SD. The MQTT alert path, the waist board with barometer and the 60 s inactivity check are not implemented yet.
+The proof-of-concept wrist detector runs on the watch and logs test trials to SD. The MQTT alert path to the Pi works. The 60 s post-fall check is implemented but its trials (REQ-FD-06) and the alert delivery-time measurements (REQ-FD-02) have not been run yet. The waist board with barometer is not implemented yet.
