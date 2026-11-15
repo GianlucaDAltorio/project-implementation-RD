@@ -1,18 +1,12 @@
-"""Cut impact-triggered windows from the wrist recordings and compute their features.
+"""Cuts impact windows from the wrist recordings and computes the 14 features.
 
-A window is opened wherever the acceleration magnitude reaches 2.5 g (triggers closer
-than 2 s to a stronger one are skipped) and covers 1 s before and 2 s after the impact.
-Each window gets the 14 features used on the watch. A window is labelled positive when
-it comes from a fall trial and the impact lies within 1.5 s of the recorded fall time
-(10 s into the trial).
+A window opens wherever |a| reaches 2.5 g and covers 1 s before to 2 s after the peak.
+It is labelled a fall if it comes from a fall trial and the impact is within 1.5 s of
+the fall time (10 s into the trial). Writes data/features/wrist_windows.csv.
 
-The feature definitions here are mirrored in src/FallDetector_trials/fall_detect.c;
-changing one requires changing the other.
+The features must match src/FallDetector_trials/fall_detect.c.
 
-Usage:
-    python wrist_windows.py
-
-Writes data/features/wrist_windows.csv.
+Usage: python wrist_windows.py
 """
 import numpy as np
 import pandas as pd

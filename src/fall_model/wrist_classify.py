@@ -1,13 +1,10 @@
-"""Evaluate the windowed wrist model.
+"""Picks the decision threshold and tests the wrist model.
 
-Training and validation subjects are cross-validated by subject (6 folds) to choose the
-decision threshold: the one with the lowest false-alarm rate whose trial-level miss rate
-is at most 5%. A final forest is then fitted on those subjects and scored once on the
-held-out test subjects. A trial counts as detected if any of its windows reaches the
-threshold, and a trial with no trigger raises no alarm.
+The threshold is chosen by 6-fold cross-validation over the training and validation
+subjects: the lowest false-alarm rate with a miss rate of 5% or less. The model is then
+scored once on the test subjects.
 
-Usage:
-    python wrist_classify.py
+Usage: python wrist_classify.py
 """
 import numpy as np
 import pandas as pd

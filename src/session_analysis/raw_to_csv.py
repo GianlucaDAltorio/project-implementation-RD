@@ -1,7 +1,6 @@
-"""Convert a raw_nnn.bin from the watch into a CSV (units: g and deg/s).
-usage: python3 raw_to_csv.py raw_001.bin [out.csv]
-Each record is 16 bytes: uint32 t_ms, then int16 ax ay az gx gy gz.
-Scales (must match the sketch): accel 8 g / 32768 per count, gyro 1024 dps / 32768 per count."""
+"""Converts a raw_nnn.bin from the watch to CSV (g and deg/s).
+Usage: python3 raw_to_csv.py raw_001.bin [out.csv]
+Each record is 16 bytes: uint32 t_ms, then int16 ax ay az gx gy gz (8 g and 1024 dps full scale)."""
 import sys, struct
 from pathlib import Path
 ACC, GYR = 8.0 / 32768, 1024.0 / 32768

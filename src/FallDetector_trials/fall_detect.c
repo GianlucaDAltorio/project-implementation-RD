@@ -1,6 +1,4 @@
-/* Window features, random-forest evaluation and the streaming trigger state machine.
- * State: 0 idle, 1 locking the peak for 1 s after the first threshold crossing,
- * 2 waiting for the 2 s of post-impact samples, then evaluate. See fall_detect.h. */
+/* Window features, random-forest evaluation and the impact trigger. See fall_detect.h. */
 #include "fall_detect.h"
 #include "fall_model.h"
 #include <math.h>

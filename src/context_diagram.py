@@ -1,20 +1,10 @@
 """
-Context diagram for the fall-detection & caregiver-alert system.
+Draws the context diagram (context_diagram.pdf).
 
-Legend:
-  - solid box    = the system itself (one block, nothing subdivided)
-                   and other required equipment (computer, dashboard)
-  - dashed box   = the system boundary (drawn around the one system
-                   block, per the guide's figure)
-  - dashed ellipses = stakeholders (people), connected by dashed lines
-                      to whichever equipment they care about
-  - solid arrows = labeled data/signal flow between equipment
-  - dashed lines = unlabeled association between a stakeholder and
-                    the equipment relevant to them (no data label needed)
-
-Outputs: context_diagram.pdf
+Solid boxes are equipment, the dashed box is the system boundary, dashed ellipses are
+stakeholders. Solid arrows carry labelled data; dashed lines link a stakeholder to the
+equipment they use.
 """
-
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
@@ -94,20 +84,14 @@ def dashed_line(start, end):
             linestyle=(0, (4, 3)), linewidth=LW, color="black", zorder=1)
 
 
-# ---------------------------------------------------------------------
-# System boundary containing one undivided block. The watch and custom
-# PCB both live inside this block
-# ---------------------------------------------------------------------
+# System boundary with the system block (watch and waist board)
 dashed_container((40, 40), 50, 50, "System Boundary")
 
 sys_x, sys_y, sys_w, sys_h = solid_box(
     (48, 46), 34, 29, "Fall Detection\nSystem")
 sys_mid_y = sys_y + sys_h / 2
 
-# ---------------------------------------------------------------------
-# Computer (MQTT broker) and Dashboard: two separate pieces of required
-# equipment, outside the boundary
-# ---------------------------------------------------------------------
+# Laptop (broker) and dashboard, outside the boundary
 comp_x, comp_y, comp_w, comp_h = solid_box(
     (100, 54), 34, 13, "Computer\n(MQTT broker)")
 dash_x, dash_y, dash_w, dash_h = solid_box(
@@ -127,9 +111,7 @@ solid_arrow(
     label_offset=(14, 0), fontsize=8.5,
 )
 
-# ---------------------------------------------------------------------
-# Wearer: dashed ellipse, dashed (unlabeled) line into the system block
-# ---------------------------------------------------------------------
+# Wearer
 wearer_x, wearer_y = 10, sys_mid_y
 dashed_ellipse((wearer_x, wearer_y), 20, 15, "Wearer")
 dashed_line((wearer_x + 10, wearer_y), (sys_x, sys_mid_y))
@@ -137,10 +119,7 @@ dashed_line((wearer_x + 10, wearer_y), (sys_x, sys_mid_y))
 ax.text(wearer_x + 15, wearer_y + 10, "motion /\ncancel", ha="center",
         va="center", fontsize=8, style="italic")
 
-# ---------------------------------------------------------------------
-# Caregiver / Family and Care Facility: two independent stakeholders,
-# each with its own dashed line straight from the dashboard
-# ---------------------------------------------------------------------
+# Caregiver/family and care facility
 caregiver_x, caregiver_y = 172, 49
 carefac_x, carefac_y = 172, 19
 

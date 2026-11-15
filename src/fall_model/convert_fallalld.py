@@ -1,15 +1,10 @@
-"""Convert FallAllD .dat files to labelled CSV files.
+"""Converts FallAllD .dat files to one CSV per trial, plus an index.csv.
 
-Each trial is merged from its _A, _G, _M and _B files onto the 238 Hz accelerometer
-timeline (magnetometer and barometer samples are held between updates) and written as
-<trial>.csv. An index.csv with one row per trial is written alongside.
+The _A, _G, _M and _B files are merged onto the 238 Hz accelerometer timeline. Scaling
+follows the dataset's LSM9DS1 settings: accel 0.244 mg/LSB, gyro 70 mdps/LSB,
+magnetometer 0.14 mgauss/LSB.
 
-Scaling follows the LSM9DS1 settings used by the dataset authors:
-accelerometer 0.244 mg/LSB (+-8 g), gyroscope 70 mdps/LSB (+-2000 dps),
-magnetometer 0.14 mgauss/LSB (+-4 gauss).
-
-Usage:
-    python convert_fallalld.py <input_dir> <output_dir> <ActivityID2Str.m>
+Usage: python convert_fallalld.py <input_dir> <output_dir> <ActivityID2Str.m>
 """
 import re
 import sys

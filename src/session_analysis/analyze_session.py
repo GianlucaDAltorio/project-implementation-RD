@@ -1,20 +1,11 @@
-"""Score test sessions from the watch's event logs.
+"""Scores watch test sessions from the event logs.
 
-The watch records the trial type itself (one BOOT press = real-fall trial, two presses =
-non-fall trial), so no separate label file is needed. A trial runs from its MARK row until
-the next MARK, at most the trial window: 15 s (the on-screen banner), or 30 s for the
-round-1 sessions listed in WINDOW_S below, which were recorded with the older firmware.
---window overrides both.
+One BOOT press marks a real-fall trial, two mark a non-fall trial. A FALL call inside a
+trial window counts as detected (fall trial) or a false alarm (non-fall trial). The
+window is 15 s, or 30 s for the round-1 sessions in WINDOW_S.
 
-    real-fall trial  with a FALL call inside -> detected,    none -> MISSED
-    non-fall trial   with a FALL call inside -> FALSE ALARM, none -> correct
-
-Usage:
-    python analyze_session.py [events.csv ...] [--notes notes.csv] [--window 15] [--void N ...]
-
-With no file arguments every *_clean.csv in data/sessions/clean is scored, followed by
-combined totals. --void ignores the given trial numbers. notes.csv has the columns
-mark,note and adds a description column to the table (see notes_template.csv).
+Usage: python analyze_session.py [events.csv ...] [--notes notes.csv] [--window 15] [--void N ...]
+With no files, every *_clean.csv in data/sessions/clean is scored.
 """
 import argparse, sys
 from pathlib import Path

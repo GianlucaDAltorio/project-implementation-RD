@@ -1,11 +1,8 @@
-"""Whole-trial baseline: random forest on trial-level features, waist vs wrist, with and
-without the barometer.
+"""Whole-trial baseline: random forest on trial features, wrist vs waist, with and
+without the barometer. The threshold is the highest with a validation miss rate of 5% or
+less; results are reported on the test subjects.
 
-For each setting the decision threshold is the highest one whose validation miss rate
-is at most 5%; miss and false-alarm rates are then reported on the test subjects.
-
-Usage:
-    python baseline.py [features.csv]
+Usage: python baseline.py [features.csv]
 """
 import sys
 from pathlib import Path

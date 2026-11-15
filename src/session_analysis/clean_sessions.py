@@ -1,19 +1,10 @@
-"""Make clean copies of the watch's events_nnn.csv session logs.
+"""Makes clean copies of the watch's events_nnn.csv logs.
 
-A trial runs from its MARK row until the next MARK, at most the trial window set for
-that session below (the same rule as analyze_session.py). The clean copy keeps the START row
-plus the MARK, IMPACT and CANCEL rows that fall inside a confirmed trial. Dropped:
-  - trials listed in SESSIONS below (accidental button presses)
-  - trials voided on the watch (VOID rows)
-  - impacts and cancel presses outside every kept trial window (watch handling between trials)
-Repeat FALL calls inside a kept window are retained. A session that contains both trial types
-is written as two files, <name>_falls_clean.csv and <name>_nonfalls_clean.csv; a session with
-only one type keeps a single <name>_clean.csv. Originals are not modified.
+Keeps only the rows inside confirmed trials. A trial runs from its MARK to the next MARK,
+at most the trial window. Voided trials and the ones listed in SESSIONS are dropped.
+Sessions with both trial types are split into _falls_clean.csv and _nonfalls_clean.csv.
 
-Usage:
-    python clean_sessions.py
-
-Reads data/sessions/original, writes data/sessions/clean/.
+Usage: python clean_sessions.py    (reads data/sessions/original, writes data/sessions/clean)
 """
 from pathlib import Path
 

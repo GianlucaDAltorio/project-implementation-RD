@@ -1,11 +1,10 @@
-/* Streaming wrist fall detector (portable C99, no Arduino or ESP-IDF dependencies).
+/* Streaming wrist fall detector (plain C, no Arduino dependencies).
  *
- * Call fd_push() once per IMU sample at FD_FS Hz, acceleration in g and rotation in deg/s.
- * An impact at or above FD_TRIG_G opens a window of 1 s before and 2 s after the peak;
- * the 14 window features go through the random forest in fall_model.h. fd_push() returns 1
- * when the window's fall probability reaches the model threshold, about 2 s after the impact.
+ * Call fd_push() for every IMU sample (g and deg/s). An impact of 2.5 g or more opens a
+ * window from 1 s before to 2 s after the peak, and the 14 window features go through the
+ * random forest in fall_model.h. fd_push() returns 1 when the window is classed as a fall.
  *
- * Feature definitions mirror src/fall_model/wrist_windows.py. */
+ * The features must match src/fall_model/wrist_windows.py. */
 #pragma once
 #include <stdint.h>
 #ifndef FD_FS

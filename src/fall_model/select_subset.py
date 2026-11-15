@@ -1,22 +1,15 @@
-"""Copy the FallAllD files used in this project into a smaller folder.
+"""Copies the FallAllD files used in this project into a smaller folder.
 
-By default keeps the wrist (device 2) and waist (device 3) loggers, the fall and
-daily-activity IDs listed below, and all four sensor files (_A, _G, _M, _B) of each trial.
+Usage: python select_subset.py <FallAllD_dir> [out_dir] [options]
 
-Usage:
-    python select_subset.py <FallAllD_dir> [out_dir] [options]
+    out_dir           default data/fallalld/my_subset
+    --max-trial N     skip trials numbered above N
+    --devices 2,3     loggers to keep (1 neck, 2 wrist, 3 waist)
+    --sensors AG      sensor files to keep (the model only uses A and G)
+    --activities SET  "default", "all", or a list such as 5,6,101,103
 
-    out_dir            defaults to data/fallalld/my_subset
-    --max-trial N      skip trials numbered above N
-    --devices 2,3      loggers to keep (1 neck, 2 wrist, 3 waist)
-    --sensors AG       sensor files to keep; the model only uses A and G, which roughly
-                       halves the size
-    --activities SET   "default" (project selection), "all" (every ID), or a comma list
-                       such as 5,6,7,13,26,27,101,103
-
-Examples:
-    python select_subset.py D:/FallAllD
-    python select_subset.py D:/FallAllD data/fallalld/wrist_all --devices 2 --sensors AG --activities all
+Example (v2 subset):
+    python select_subset.py D:/FallAllD data/fallalld/my_subset_v2 --devices 2 --sensors AG --activities all
 """
 import argparse
 import re

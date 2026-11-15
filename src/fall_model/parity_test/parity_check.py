@@ -1,14 +1,10 @@
-"""Check that the C detector reproduces the Python model.
+"""Checks that the C detector gives the same results as the Python model.
 
-Builds harness.c against src/FallDetector_trials and, for each of the 200 windows in
-data/features/py_reference.csv, compares the C probability and the 14 features with the
-Python values. The C code works in float32, so a feature sitting on a split threshold can
-flip one tree; the check allows a probability difference of up to 0.02 (two trees) and
-requires the same fall/no-fall decision at the model threshold. Requires gcc and the
-FallAllD subset in data/fallalld/my_subset.
+Builds harness.c and runs it on the 200 windows in data/features/py_reference.csv.
+The C code uses float32, so a probability difference up to 0.02 (two trees) is allowed,
+but the fall/no-fall decision must match. Needs gcc and the FallAllD subset.
 
-Usage:
-    python parity_check.py
+Usage: python parity_check.py
 """
 import subprocess
 import sys

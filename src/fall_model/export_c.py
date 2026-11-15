@@ -1,19 +1,9 @@
-"""Train the deployed wrist model and export it as C arrays for the watch.
+"""Trains the final wrist model and exports it as C arrays for the watch.
 
-Fits the random forest (100 trees, depth 6) on the training and validation subjects with
-the same settings as wrist_classify.py and writes the trees as flat arrays that
-fall_detect.c walks with plain comparisons.
+Writes src/FallDetector_trials/fall_model.h, plus feature_order.csv and py_reference.csv
+in data/features for the parity check. Set THR to the threshold from wrist_classify.py.
 
-Outputs:
-    src/FallDetector_trials/fall_model.h   trees and decision threshold (THR below)
-    data/features/feature_order.csv        feature index used by the C code
-    data/features/py_reference.csv         200 windows with Python probabilities,
-                                           used by parity_test/parity_check.py
-
-THR is the decision threshold compiled into the firmware.
-
-Usage:
-    python export_c.py
+Usage: python export_c.py
 """
 from pathlib import Path
 

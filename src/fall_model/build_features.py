@@ -1,16 +1,11 @@
-"""Whole-trial features for the selected FallAllD subset, with a subject-level split.
+"""Whole-trial features for the FallAllD subset, one row per trial.
 
-Writes one row per trial (peak and spread of acceleration and rotation, jerk, barometer
-change) to data/features/features.csv. Subjects are split into training, validation
-(7, 10, 13) and test (2, 9, 14) sets by number, so no person appears in two sets and
-the split stays the same when the subset changes. The wrist rows of this file supply
-the split used by the windowed model. Barometer columns are empty when the subset has
-no _B files.
+Subjects are split by number: validation 7, 10, 13 and test 2, 9, 14, the rest for
+training, so no person is in two sets. Barometer columns are left empty if the subset
+has no _B files.
 
-Usage:
-    python build_features.py [subset_dir] [ActivityID2Str.m] [out_dir]
-
-Defaults: data/fallalld/my_subset_v2, data/fallalld/ActivityID2Str.m, data/features.
+Usage: python build_features.py [subset_dir] [ActivityID2Str.m] [out_dir]
+Defaults: data/fallalld/my_subset_v2, data/fallalld/ActivityID2Str.m, data/features
 """
 import re
 import sys
