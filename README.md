@@ -21,12 +21,13 @@ The written Project Proposal, built in LaTeX.
 - `watch_MQTT_test/` MQTT connection test for the watch: publishes a test alert to the broker on each BOOT press (copy `secrets_example.h` to `secrets.h` first).
 - `FallDetector_trials/` watch firmware: IMU sampling at 238 Hz, impact-triggered fall classifier, 15 s cancel window, MQTT alerts, 60 s post-fall check, on-screen status, and SD logging with button-marked test trials.
 - `dashboard/` Raspberry Pi alert screen (`screen.py`) and a laptop test publisher (`publisher.py`).
+- `waist_sensor_test/` checks the waist board on a breadboard: ESP32 with an MPU6050 (accel/gyro) and a BMP280 (pressure) on I2C.
 - `fall_model/` training pipeline for the classifier (FallAllD to features to random forest to C header) and a C-versus-Python parity check.
-- `session_analysis/` tools that clean and score the SD card logs from watch test sessions.
+- `session_analysis/` tools that clean and score the SD card logs from watch test sessions, the post-fall check trials and the alert delivery tests.
 
 ### `data/`
 - `features/` outputs of the training pipeline (`features.csv`, `wrist_windows.csv`, feature order, Python reference windows for the parity check).
-- `sessions/` watch test logs, original and cleaned, plus the raw IMU recordings.
+- `sessions/` watch test logs, original and cleaned, plus the raw IMU recordings; `sessions/postfall/` and `sessions/link/` hold the post-fall and delivery tests.
 - `fallalld/` instructions for recreating the FallAllD subset (the data itself is not committed).
 
 ## Reproducing the wrist fall model
@@ -64,8 +65,32 @@ Watch → MQTT over Wi-Fi → Mosquitto broker on the laptop → Raspberry Pi, w
 2. Watch: copy `src/FallDetector_trials/secrets_example.h` to `secrets.h` in the same folder and fill in the Wi-Fi name, password and the laptop's IPv4 address. `secrets.h` is not committed. Build settings are at the top of the sketch.
 3. Pi: set `BROKER` in `src/dashboard/screen.py` to the laptop's address, then `pip install paho-mqtt` and `python3 screen.py`.
 
-After a detected fall the watch waits 15 s for a BOOT cancel, then publishes the alert. It then watches for wrist movement: 60 s in a row with none publishes an escalation. A BOOT press after the alert is sent tells the dashboard the wearer is OK. Message formats are in `src/FallDetector_trials/README.md`; the Pi logs every alert to `alerts_log.csv` with its delay since detection.
+After a detected fall the watch waits 15 s for a BOOT cancel, then publishes the alert. It then watches for wrist movement: 60 s in a row with none publishes an escalation. A BOOT press after the alert is sent tells the dashboard the wearer is OK. The Pi acknowledges every message, and the watch resends until it does. Message formats are in `src/FallDetector_trials/README.md`; the Pi logs every alert to `alerts_log.csv` with its delay since detection.
+
+### Post-fall check (REQ-FD-06)
+
+`python src/session_analysis/postfall_results.py` rebuilds the results in `data/sessions/postfall/`. The watch was dropped and either left still or picked up and kept moving.
+
+| Trial type | Trials | Result |
+| --- | --- | --- |
+| Still | 5 | 5 escalated, 60.0-70.8 s after detection (60.0 s of stillness each time) |
+| Recovery | 5 | 5 did not escalate |
+
+### Alert delivery (REQ-FD-02)
+
+`python src/session_analysis/link_results.py` rebuilds the results in `data/sessions/link/`. Delay is from detection on the watch to arrival at the Pi, and includes the 15 s cancel window.
+
+| Run | Firmware | RSSI (dBm) | Fall alerts delivered | Fall alert delay (s) | Watch restarts |
+| --- | --- | --- | --- | --- | --- |
+| Strong link | no ack | -53 to -71 | 10 of 10 | 15.22-15.38 | 0 |
+| Weak link | no ack | -65 to -78 | 9 of 10 | 15.06-15.53 | 1 |
+| Weak link | ack | -71 to -79 | 10 of 10 | 15.07-24.48 | 1 (watchdog) |
+| Moderate link | ack, watchdog fix | -66 to -74 | 10 of 10 | 15.01-15.08 | 0 |
+| Broker stopped 10-15 s | ack, watchdog fix | -63 to -65 | 5 of 5 | 28.29-40.10 | 0 |
+| Broker suspended about 20 s | ack, watchdog fix | -61 to -70 | 5 of 5 | 34.50-60.76 | 0 |
+
+Without acknowledgements one alert was lost at the weak link. With them every message arrived, including after the broker outages, where delays over 25 s are expected. The watchdog restarts happened while the watch was reconnecting; running the network task at the idle task's priority stopped them.
 
 ## Status
 
-The proof-of-concept wrist detector runs on the watch and logs test trials to SD. The MQTT alert path to the Pi works. The 60 s post-fall check is implemented but its trials (REQ-FD-06) and the alert delivery-time measurements (REQ-FD-02) have not been run yet. The waist board with barometer is not implemented yet.
+The proof-of-concept wrist detector runs on the watch and logs test trials to SD. The MQTT alert path to the Pi works, with acknowledgements and resending. The 60 s post-fall check passed its 10 trials. The waist board with barometer is wired on a breadboard (ESP32, MPU6050, BMP280) and its sensors have been checked; its firmware and the sensor fusion are not done yet. The false-alarm rate on the wrist is still far above target.
