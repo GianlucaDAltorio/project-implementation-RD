@@ -1,5 +1,8 @@
 # Watch test sessions
 
+Fall detection trials (rounds 1 and 2) are in this folder. The post-fall check trials are in
+`postfall/` and the alert delivery tests in `link/`, each with its own README.
+
 `original/` holds the `events_nnn.csv` files exactly as written to the SD card.
 `clean/` holds the same sessions reduced to confirmed trial windows by
 `src/session_analysis/clean_sessions.py`. A session with both trial types is split into
@@ -15,5 +18,5 @@ Round 2 also used the one-FALL-per-trial lockout (extra FALL calls are logged as
 Trials excluded from each session are listed in `clean_sessions.py`. Rows outside the confirmed
 windows are removed from the clean files and stay in `original/`.
 
-Raw IMU recordings (`raw_nnn.bin`) from the same sessions belong in `raw/` and convert with
-`src/session_analysis/raw_to_csv.py`.
+Raw IMU recordings go in `raw/` and convert with `src/session_analysis/raw_to_csv.py`.
+`raw_postfall_001.bin` and `raw_link_r3_moderate.bin` are from the post-fall and link tests.

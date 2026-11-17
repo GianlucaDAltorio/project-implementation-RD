@@ -1,8 +1,9 @@
 """
 Pi dashboard. Subscribes to pi/dashboard/# on the laptop's broker and shows the latest
 alert from the watch: red for a fall, flashing red for an escalation, green when the
-wearer cancels. Every alert is also appended to alerts_log.csv with the delay since
-detection (needs NTP time on the watch and the Pi).
+wearer cancels. Each alert is acknowledged on pi/dashboard/ack so the watch stops
+resending it, and repeats are ignored. Every alert is appended to alerts_log.csv with
+the delay since detection (needs NTP time on the watch and the Pi).
 
 Run: python3 screen.py    (q quits, c clears the screen)
 """
@@ -19,11 +20,13 @@ BROKER = "172.20.10.2"  # laptop's IPv4 address
 TOPIC = "pi/dashboard/#"
 LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alerts_log.csv")
 LOG_FIELDS = ["recv_time", "event", "aid", "n", "msg", "p", "peak_g", "still_s",
-              "detect_ms", "sent_ms", "recv_ms", "delay_s", "wait_ms", "rssi"]
+              "detect_ms", "sent_ms", "recv_ms", "delay_s", "wait_ms", "rssi", "try"]
+ACK_TOPIC = "pi/dashboard/ack"
 
 state = {"event": None, "msg": "waiting for data...", "aid": "-", "ts": "-", "recv": "-",
          "delay": None, "watch": "unknown", "link": "connecting..."}
 lock = threading.Lock()
+seen = set()  # (aid, event) already received
 
 
 def log_alert(data, recv_ms):
@@ -60,6 +63,8 @@ def on_message(client, userdata, m):
     except json.JSONDecodeError:
         data = {"msg": m.payload.decode(errors="replace")}
 
+    if m.topic.endswith("/ack"):
+        return
     if m.topic.endswith("/status"):
         with lock:
             state["watch"] = data.get("msg", "?")
@@ -67,6 +72,13 @@ def on_message(client, userdata, m):
 
     event = data.get("event")
     is_alert = event in ("fall", "escalate", "cancel")
+    if is_alert:
+        key = (data.get("aid"), event)
+        ack = json.dumps({"aid": key[0], "event": event}, separators=(",", ":"))  # no spaces, the watch matches exact text
+        client.publish(ACK_TOPIC, ack, qos=1)
+        if key in seen:
+            return  # a resend, already logged
+        seen.add(key)
     delay = log_alert(data, recv_ms) if is_alert else None
     with lock:
         if not is_alert and state["event"] in ("fall", "escalate"):

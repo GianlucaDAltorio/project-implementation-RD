@@ -13,6 +13,9 @@ Insert a FAT32 microSD card before powering on.
 ## Behaviour
 
 - After a detected fall the wearer has 15 s to cancel with BOOT. Otherwise the alert is published to `pi/dashboard/alert`. If the broker is down, the alert waits in a queue of 4.
+- Every message is resent until the Pi acknowledges it. With no ack within 3 s (`ACK_TIMEOUT_MS`) the watch drops the connection, reconnects and sends it again. Messages go one at a time, in order.
+- The network task runs at priority 0, the idle task's priority. While PubSubClient waits for the broker it never pauses; at a higher priority that starved the idle task and the task watchdog restarted the watch.
+- Each new SD session's `START` row says why the watch last restarted.
 - Post-fall check (REQ-FD-06): the watch looks for wrist movement in 1 s blocks. 60 s in a row with no movement sends an escalation. If that hasn't happened 120 s after detection, the check ends as `MOVED`. Thresholds: `STILL_ESCALATE_MS`, `POSTFALL_MAX_MS`, `MOVE_ACC_G`, `MOVE_GYR_DPS`.
 - After the alert is sent, a BOOT press ("I'm OK") sends a `cancel` message at any time, until a new fall replaces the alert. The first press after a sent alert is always "I'm OK", so press again to mark the next trial.
 - Trials last 15 s from the mark. Only the first FALL in a trial raises an alert; later ones are logged as `suppressed`.
@@ -21,8 +24,9 @@ Insert a FAT32 microSD card before powering on.
 
 | Topic | Fields |
 |---|---|
-| `pi/dashboard/alert` | `event` (`fall`, `escalate` or `cancel`), `aid`, `msg`, `n`, `ts`, `p`, `peak_g`, `still_s`, `detect_ms`, `sent_ms`, `wait_ms`, `rssi` |
+| `pi/dashboard/alert` | `event` (`fall`, `escalate` or `cancel`), `aid`, `msg`, `n`, `ts`, `p`, `peak_g`, `still_s`, `detect_ms`, `sent_ms`, `wait_ms`, `rssi`, `try` (1 = first send) |
 | `pi/dashboard/status` | retained, also the Last Will: `msg` = online or OFFLINE |
+| `pi/dashboard/ack` | from the Pi: `{"aid":"...","event":"..."}` for each message received |
 
 `aid` is a random boot id plus the fall number, so falls from different power-ups never
 share an id. The Pi dashboard is `../dashboard/screen.py`.
@@ -36,9 +40,10 @@ Each power-up starts a new session `n`:
 
 | Row | Meaning |
 |---|---|
-| `START`, `MARK`, `VOID` | session start, trial mark, voided trial |
+| `START` | session start; `called` = why the watch last restarted (`POWERON`, `BROWNOUT`, `CRASH`, `WATCHDOG`, ...) |
+| `MARK`, `VOID` | trial mark, voided trial |
 | `IMPACT` | an evaluated window: peak, probability, `FALL` / `ignored` / `suppressed`, the 14 features |
 | `CANCEL` | BOOT in the 15 s window, nothing sent |
-| `ALERT` | a published message: `SENT` (fall), `ESC_SENT` (escalation, `peak` = seconds still), `OK_SENT` (wearer OK) |
+| `ALERT` | a message the Pi acknowledged, at the time of the ack: `SENT` (fall), `ESC_SENT` (escalation, `peak` = seconds still), `OK_SENT` (wearer OK); `pre_min` = number of sends |
 | `POSTFALL` | end of the post-fall check: `ESCALATED`, `MOVED`, `WEARER_OK` or `REPLACED`; `peak_g` = s since detection, `p` = s with movement, `peak` = last movement (s since detection), `pre_min` = s still since then |
 | `RESOLVE` | BOOT press that cancelled a sent alert; `peak_g` = s since detection |

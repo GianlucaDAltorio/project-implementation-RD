@@ -11,3 +11,7 @@ Set `BROKER` in `screen.py` to the laptop's IPv4 address, then on the Pi:
 Every fall, escalate and cancel message is appended to `alerts_log.csv` next to the script,
 with the Pi's receive time and `delay_s` (receive time minus detection time on the watch).
 `delay_s` is only valid when the watch and the Pi both have NTP time.
+
+`screen.py` acknowledges every alert on `pi/dashboard/ack`; the watch keeps resending a
+message until that ack arrives. A resend of a message already received is acknowledged
+again but not shown or logged twice. The log's `try` column says which send got through.

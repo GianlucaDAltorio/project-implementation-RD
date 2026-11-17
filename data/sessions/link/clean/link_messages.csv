@@ -1,0 +1,137 @@
+run,firmware,session,aid,event,delivered,delay_s,sends,rssi_dbm
+r1_strong,no ack,events_r1_strong.csv,741c-1,fall,True,15.34,,-71.0
+r1_strong,no ack,events_r1_strong.csv,741c-3,fall,True,15.22,,-56.0
+r1_strong,no ack,events_r1_strong.csv,741c-3,escalate,True,60.28,,-55.0
+r1_strong,no ack,events_r1_strong.csv,741c-3,cancel,True,65.06,,-62.0
+r1_strong,no ack,events_r1_strong.csv,741c-4,fall,True,15.38,,-58.0
+r1_strong,no ack,events_r1_strong.csv,741c-4,escalate,True,60.29,,-60.0
+r1_strong,no ack,events_r1_strong.csv,741c-4,cancel,True,65.72,,-64.0
+r1_strong,no ack,events_r1_strong.csv,741c-5,fall,True,15.3,,-55.0
+r1_strong,no ack,events_r1_strong.csv,741c-5,escalate,True,60.36,,-54.0
+r1_strong,no ack,events_r1_strong.csv,741c-5,cancel,True,61.53,,-57.0
+r1_strong,no ack,events_r1_strong.csv,741c-6,fall,True,15.26,,-53.0
+r1_strong,no ack,events_r1_strong.csv,741c-6,escalate,True,60.24,,-53.0
+r1_strong,no ack,events_r1_strong.csv,741c-6,cancel,True,65.06,,-66.0
+r1_strong,no ack,events_r1_strong.csv,741c-7,fall,True,15.26,,-60.0
+r1_strong,no ack,events_r1_strong.csv,741c-7,escalate,True,60.27,,-60.0
+r1_strong,no ack,events_r1_strong.csv,741c-7,cancel,True,66.07,,-58.0
+r1_strong,no ack,events_r1_strong.csv,741c-8,fall,True,15.3,,-68.0
+r1_strong,no ack,events_r1_strong.csv,741c-8,escalate,True,60.25,,-69.0
+r1_strong,no ack,events_r1_strong.csv,741c-8,cancel,True,75.4,,-72.0
+r1_strong,no ack,events_r1_strong.csv,741c-9,fall,True,15.3,,-56.0
+r1_strong,no ack,events_r1_strong.csv,741c-9,escalate,True,60.36,,-56.0
+r1_strong,no ack,events_r1_strong.csv,741c-9,cancel,True,65.55,,-61.0
+r1_strong,no ack,events_r1_strong.csv,741c-10,fall,True,15.37,,-66.0
+r1_strong,no ack,events_r1_strong.csv,741c-10,escalate,True,60.32,,-67.0
+r1_strong,no ack,events_r1_strong.csv,741c-10,cancel,True,66.19,,-53.0
+r1_strong,no ack,events_r1_strong.csv,741c-11,fall,True,15.24,,-57.0
+r1_strong,no ack,events_r1_strong.csv,741c-11,escalate,True,60.28,,-56.0
+r1_strong,no ack,events_r1_strong.csv,741c-11,cancel,True,65.59,,-69.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-1,fall,True,15.32,,-74.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-1,escalate,True,60.34,,-73.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-1,cancel,True,121.57,,-79.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-2,fall,True,15.53,,-73.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-2,escalate,True,60.38,,-72.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-2,cancel,True,71.57,,-75.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-3,fall,True,15.38,,-71.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-3,escalate,True,60.32,,-71.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-3,cancel,True,72.12,,-74.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-4,fall,False,,,
+r1_weak,no ack,events_r1_weak_a.csv,f04e-4,escalate,True,74.2,,-81.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-4,cancel,True,74.21,,-77.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-5,fall,True,15.46,,-78.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-5,escalate,True,60.3,,-76.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-5,cancel,True,73.89,,-79.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-6,fall,True,15.34,,-76.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-6,escalate,True,66.48,,-77.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-6,cancel,True,74.13,,-77.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-7,fall,True,15.37,,-75.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-7,escalate,True,60.4,,-76.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-7,cancel,True,73.51,,-81.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-8,fall,True,15.36,,-70.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-8,escalate,True,60.37,,-70.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-8,cancel,True,71.28,,-69.0
+r1_weak,no ack,events_r1_weak_a.csv,f04e-9,fall,True,15.44,,-75.0
+r1_weak,no ack,events_r1_weak_b.csv,2b68-1,fall,True,15.06,,-65.0
+r1_weak,no ack,events_r1_weak_b.csv,2b68-1,escalate,True,60.04,,-65.0
+r1_weak,no ack,events_r1_weak_b.csv,2b68-1,cancel,True,72.78,,-70.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-1,fall,True,,1.0,-75.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-1,escalate,True,,1.0,-73.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-1,cancel,True,,1.0,-79.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-3,fall,True,15.1,1.0,-71.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-3,escalate,True,60.08,1.0,-73.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-3,cancel,True,75.34,1.0,-78.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-4,fall,True,15.1,1.0,-72.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-4,escalate,True,60.09,1.0,-73.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-4,cancel,True,79.92,2.0,-72.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-5,fall,True,15.07,1.0,-72.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-5,escalate,True,60.11,1.0,-73.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-5,cancel,True,76.9,1.0,-79.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-6,fall,True,15.11,1.0,-73.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-6,escalate,True,60.1,1.0,-72.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-6,cancel,True,74.1,1.0,-75.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-7,fall,True,15.44,1.0,-74.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-7,escalate,True,60.15,1.0,-77.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-7,cancel,True,74.44,1.0,-84.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-8,fall,True,15.13,1.0,-77.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-8,escalate,True,61.66,1.0,-79.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-8,cancel,True,74.93,1.0,-77.0
+r2_weak,"ack, net priority 1",events_r2_weak_a.csv,2cfb-9,fall,True,24.48,,-79.0
+r2_weak,"ack, net priority 1",events_r2_weak_b.csv,e29f-1,fall,True,15.07,1.0,-77.0
+r2_weak,"ack, net priority 1",events_r2_weak_b.csv,e29f-1,escalate,True,61.35,1.0,-79.0
+r2_weak,"ack, net priority 1",events_r2_weak_b.csv,e29f-1,cancel,True,75.83,2.0,-79.0
+r2_weak,"ack, net priority 1",events_r2_weak_b.csv,e29f-2,fall,True,15.1,1.0,-74.0
+r2_weak,"ack, net priority 1",events_r2_weak_b.csv,e29f-2,escalate,True,60.08,1.0,-73.0
+r2_weak,"ack, net priority 1",events_r2_weak_b.csv,e29f-2,cancel,True,72.81,1.0,-75.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-1,fall,True,15.05,1.0,-68.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-1,escalate,True,60.04,1.0,-68.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-1,cancel,True,71.56,1.0,-73.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-2,fall,True,15.02,1.0,-74.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-2,escalate,True,60.03,1.0,-74.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-2,cancel,True,71.82,1.0,-75.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-3,fall,True,15.07,1.0,-72.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-3,escalate,True,60.18,1.0,-74.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-3,cancel,True,71.88,1.0,-71.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-4,fall,True,15.02,1.0,-70.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-4,escalate,True,60.04,1.0,-69.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-4,cancel,True,71.15,1.0,-72.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-5,fall,True,15.04,1.0,-72.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-5,escalate,True,60.05,1.0,-71.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-5,cancel,True,72.48,1.0,-80.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-6,fall,True,15.01,1.0,-71.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-6,escalate,True,60.06,1.0,-69.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-6,cancel,True,71.05,1.0,-72.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-7,fall,True,15.06,1.0,-68.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-7,escalate,True,60.02,1.0,-68.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-7,cancel,True,72.48,1.0,-73.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-8,fall,True,15.07,1.0,-71.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-8,escalate,True,60.02,1.0,-72.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-8,cancel,True,70.51,1.0,-78.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-9,fall,True,15.04,1.0,-71.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-9,escalate,True,60.08,1.0,-72.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-9,cancel,True,73.33,1.0,-72.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-10,fall,True,15.08,1.0,-66.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-10,escalate,True,59.98,1.0,-70.0
+r3_moderate,"ack, net priority 0",events_r3_moderate.csv,d4e8-10,cancel,True,71.42,1.0,-65.0
+outage_stop,"ack, net priority 0",events_outage_stop.csv,b1e7-1,fall,True,36.59,2.0,-63.0
+outage_stop,"ack, net priority 0",events_outage_stop.csv,b1e7-1,cancel,True,47.98,1.0,-66.0
+outage_stop,"ack, net priority 0",events_outage_stop.csv,b1e7-2,fall,True,40.1,1.0,-63.0
+outage_stop,"ack, net priority 0",events_outage_stop.csv,b1e7-2,cancel,True,49.73,1.0,-63.0
+outage_stop,"ack, net priority 0",events_outage_stop.csv,b1e7-3,fall,True,28.29,1.0,-64.0
+outage_stop,"ack, net priority 0",events_outage_stop.csv,b1e7-3,cancel,True,43.88,1.0,-60.0
+outage_stop,"ack, net priority 0",events_outage_stop.csv,b1e7-4,fall,True,28.64,1.0,-65.0
+outage_stop,"ack, net priority 0",events_outage_stop.csv,b1e7-4,cancel,True,33.22,1.0,-63.0
+outage_stop,"ack, net priority 0",events_outage_stop.csv,b1e7-5,fall,True,37.43,3.0,-64.0
+outage_stop,"ack, net priority 0",events_outage_stop.csv,b1e7-5,cancel,True,44.55,1.0,-61.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-1,fall,True,34.5,3.0,-66.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-1,cancel,True,47.45,1.0,-65.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-2,fall,True,57.06,3.0,-70.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-2,escalate,True,60.01,1.0,-69.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-2,cancel,True,69.9,1.0,-70.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-3,fall,True,60.76,2.0,-65.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-3,escalate,True,61.2,1.0,-64.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-3,cancel,True,68.31,1.0,-64.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-4,fall,True,45.55,3.0,-66.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-4,cancel,True,47.71,1.0,-62.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-5,fall,True,41.28,3.0,-61.0
+outage_suspend,"ack, net priority 0",events_outage_suspend.csv,3163-5,cancel,True,46.62,1.0,-67.0

@@ -8,6 +8,7 @@
  * After a fall the wearer has 15 s to cancel with BOOT. Otherwise an alert goes to the
  * MQTT broker on the laptop. If the wrist then stays still for 60 s, an escalation is
  * sent. Pressing BOOT after the alert has gone out tells the dashboard the wearer is OK.
+ * Each message is resent until the Pi acknowledges it on pi/dashboard/ack.
  *
  * BOOT button: 1 press = fall trial, 2 presses = non-fall trial, hold 1 s = void the
  * trial, press during an alert = cancel. Only the first FALL in a trial raises an alert.
@@ -26,6 +27,7 @@
 #include "SensorQMI8658.hpp"
 #include "Arduino_GFX_Library.h"
 #include "esp_timer.h"
+#include "esp_system.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <time.h>
@@ -80,7 +82,9 @@ static void netTask(void *);
 #define TOPIC_STATUS "pi/dashboard/status"
 #define MSG_ONLINE   "{\"device\":\"" DEVICE_ID "\",\"event\":\"status\",\"msg\":\"" DEVICE_ID " online\"}"
 #define MSG_OFFLINE  "{\"device\":\"" DEVICE_ID "\",\"event\":\"status\",\"msg\":\"" DEVICE_ID " OFFLINE\"}"
+#define TOPIC_ACK    "pi/dashboard/ack"
 #define RETRY_MS     2000       // wait between broker reconnect attempts
+#define ACK_TIMEOUT_MS 3000     // no ack by then: reconnect and send again
 
 Arduino_DataBus *bus = new Arduino_ESP32QSPI(LCD_CS, LCD_SCLK, LCD_SDIO0, LCD_SDIO1, LCD_SDIO2, LCD_SDIO3);
 Arduino_CO5300 *gfx = new Arduino_CO5300(bus, LCD_RESET, 0, LCD_WIDTH, LCD_HEIGHT, 22, 0, 0, 0);
@@ -120,7 +124,8 @@ enum { A_FALL = 0, A_ESCALATE = 1, A_CANCEL = 2 };
 #define AQ_N 4
 static Alert aq[AQ_N];
 static volatile uint32_t aq_head = 0, aq_tail = 0;
-static volatile uint32_t sent_boot_ms[AQ_N];  // millis() when each alert was published
+static volatile uint32_t sent_boot_ms[AQ_N];  // millis() when the Pi acknowledged each alert
+static volatile uint8_t sent_tries[AQ_N];     // sends it took
 static uint32_t aq_logged = 0;               // alerts already written to the SD log (core 1)
 static Alert cur_fall;                       // the fall in its cancel window (core 1)
 static bool cur_queued = true;
@@ -241,7 +246,7 @@ void setup() {
     gfx->fillScreen(RGB565_BLACK);
     xTaskCreatePinnedToCore(sdTask, "sd", 8192, NULL, 1, NULL, 0);
     xTaskCreatePinnedToCore(displayTask, "disp", 8192, NULL, 1, NULL, 0);
-    xTaskCreatePinnedToCore(netTask, "net", 8192, NULL, 1, NULL, 0);
+    xTaskCreatePinnedToCore(netTask, "net", 8192, NULL, 0, NULL, 0);   // same priority as the idle task, see README
 
     next_us = (double)esp_timer_get_time() + PERIOD_US;
     last_pub_us = last_status_us = esp_timer_get_time();
@@ -361,11 +366,11 @@ void loop() {
         const Alert &a = aq[aq_logged % AQ_N];
         char line[96];
         if (a.kind == A_ESCALATE)
-            snprintf(line, sizeof line, "ALERT,%lu,%u,%.3f,%.4f,ESC_SENT,%u,,,,,,,,,,,,,", (unsigned long)sent_boot_ms[aq_logged % AQ_N],
-                     (unsigned)a.id, a.peak, a.p, (unsigned)a.still_s);
+            snprintf(line, sizeof line, "ALERT,%lu,%u,%.3f,%.4f,ESC_SENT,%u,%u,,,,,,,,,,,,", (unsigned long)sent_boot_ms[aq_logged % AQ_N],
+                     (unsigned)a.id, a.peak, a.p, (unsigned)a.still_s, (unsigned)sent_tries[aq_logged % AQ_N]);
         else
-            snprintf(line, sizeof line, "ALERT,%lu,%u,%.3f,%.4f,%s,,,,,,,,,,,,,,", (unsigned long)sent_boot_ms[aq_logged % AQ_N],
-                     (unsigned)a.id, a.peak, a.p, a.kind == A_CANCEL ? "OK_SENT" : "SENT");
+            snprintf(line, sizeof line, "ALERT,%lu,%u,%.3f,%.4f,%s,,%u,,,,,,,,,,,,", (unsigned long)sent_boot_ms[aq_logged % AQ_N],
+                     (unsigned)a.id, a.peak, a.p, a.kind == A_CANCEL ? "OK_SENT" : "SENT", (unsigned)sent_tries[aq_logged % AQ_N]);
         log_line(line);
         aq_logged++;
     }
@@ -385,6 +390,17 @@ void loop() {
 }
 
 // SD card writer (core 0)
+static const char *reset_reason() {          // why the watch last restarted
+    switch (esp_reset_reason()) {
+        case ESP_RST_POWERON:  return "POWERON";
+        case ESP_RST_BROWNOUT: return "BROWNOUT";
+        case ESP_RST_PANIC:    return "CRASH";
+        case ESP_RST_INT_WDT: case ESP_RST_TASK_WDT: case ESP_RST_WDT: return "WATCHDOG";
+        case ESP_RST_SW:       return "SOFTWARE";
+        case ESP_RST_USB:      return "USB";
+        default:               return "OTHER";
+    }
+}
 static void sdTask(void *) {
     SD_MMC.setPins(SDMMC_CLK, SDMMC_CMD, SDMMC_DATA);
     if (!SD_MMC.begin("/sdcard", true) || SD_MMC.cardType() == CARD_NONE) { sd_state = 2; Serial.println("# SD: no card / mount failed"); vTaskDelete(NULL); return; }
@@ -399,7 +415,7 @@ static void sdTask(void *) {
     if (!fe) { sd_state = 2; Serial.println("# SD: cannot create file"); vTaskDelete(NULL); return; }
 #endif
     fe.print("kind,boot_ms,id,peak_g,p,called,peak,pre_min,pre_std,pre_max,post_dev,post_std,post_max,jerk,gyr_peak,gyr_pre,gyr_post,gyr_post_late,tilt_deg,dur_hi\n");
-    fe.printf("START,%lu,%u,,,,,,,,,,,,,,,,,\n", (unsigned long)millis(), (unsigned)n);
+    fe.printf("START,%lu,%u,,,%s,,,,,,,,,,,,,,\n", (unsigned long)millis(), (unsigned)n, reset_reason());
     fe.flush();
     sd_session = n; sd_state = 1;
     Serial.printf("# SD: session %u -> %s\n", (unsigned)n, pe);
@@ -437,16 +453,35 @@ static bool mqtt_connect() {
         return false;
     }
     mqtt.publish(TOPIC_STATUS, MSG_ONLINE, true);
+    mqtt.subscribe(TOPIC_ACK, 1);
     Serial.println("# MQTT connected");
     return true;
 }
 
-static bool publish_alert(const Alert &a) {
+static const char *event_name(const Alert &a) {
+    return a.kind == A_ESCALATE ? "escalate" : a.kind == A_CANCEL ? "cancel" : "fall";
+}
+
+// Ack from the Pi; only one for the message being sent counts
+static bool ack_ok = false;
+static void on_mqtt(char *topic, byte *data, unsigned int len) {
+    if (strcmp(topic, TOPIC_ACK) != 0 || aq_tail == aq_head) return;
+    char buf[128]; unsigned n = len < sizeof buf - 1 ? len : sizeof buf - 1;
+    memcpy(buf, data, n); buf[n] = 0;
+    const Alert &a = aq[aq_tail % AQ_N];
+    char want[64];
+    snprintf(want, sizeof want, "\"aid\":\"%04x-%u\"", (unsigned)boot_id, (unsigned)a.id);
+    char want_ev[32];
+    snprintf(want_ev, sizeof want_ev, "\"event\":\"%s\"", event_name(a));
+    if (strstr(buf, want) && strstr(buf, want_ev)) ack_ok = true;
+}
+
+static bool publish_alert(const Alert &a, unsigned tries) {
     uint64_t sent_epoch = epoch_ms();
     char hhmmss[9] = "--:--:--";
     struct tm t;
     if (getLocalTime(&t, 0)) strftime(hhmmss, sizeof hhmmss, "%H:%M:%S", &t);
-    const char *ev = a.kind == A_ESCALATE ? "escalate" : a.kind == A_CANCEL ? "cancel" : "fall";
+    const char *ev = event_name(a);
     char msg[64];
     if (a.kind == A_ESCALATE)    snprintf(msg, sizeof msg, "WEARER IN CRITICAL CONDITION - %s", DEVICE_ID);
     else if (a.kind == A_CANCEL) snprintf(msg, sizeof msg, "WEARER OK, ALERT CANCELLED - %s", DEVICE_ID);
@@ -454,10 +489,10 @@ static bool publish_alert(const Alert &a) {
     char payload[460];
     snprintf(payload, sizeof payload,
              "{\"device\":\"%s\",\"event\":\"%s\",\"msg\":\"%s\",\"aid\":\"%04x-%u\",\"n\":%u,\"ts\":\"%s\","
-             "\"p\":%.3f,\"peak_g\":%.2f,\"still_s\":%u,\"detect_ms\":%llu,\"sent_ms\":%llu,\"wait_ms\":%lu,\"rssi\":%d}",
+             "\"p\":%.3f,\"peak_g\":%.2f,\"still_s\":%u,\"detect_ms\":%llu,\"sent_ms\":%llu,\"wait_ms\":%lu,\"rssi\":%d,\"try\":%u}",
              DEVICE_ID, ev, msg, (unsigned)boot_id, (unsigned)a.id, (unsigned)a.id, hhmmss, a.p, a.peak,
              (unsigned)a.still_s, (unsigned long long)a.detect_epoch_ms, (unsigned long long)sent_epoch,
-             (unsigned long)(millis() - a.detect_boot_ms), WiFi.RSSI());
+             (unsigned long)(millis() - a.detect_boot_ms), WiFi.RSSI(), tries);
     bool ok = mqtt.publish(TOPIC_ALERT, payload);
     Serial.printf("# %s %s\n", ok ? "ALERT SENT" : "ALERT publish failed", payload);
     return ok;
@@ -469,10 +504,12 @@ static void netTask(void *) {
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     configTzTime("EST5EDT,M3.2.0,M11.1.0", "pool.ntp.org", "time.nist.gov");   // syncs once Wi-Fi is up
     mqtt.setServer(MQTT_HOST, MQTT_PORT);
+    mqtt.setCallback(on_mqtt);
     mqtt.setBufferSize(512);
     mqtt.setKeepAlive(15);
     mqtt.setSocketTimeout(5);
-    uint32_t last_try = 0;
+    uint32_t last_try = 0, inflight_ms = 0;   // inflight_ms: time of the last send, 0 = not sent
+    unsigned tries = 0;
     bool wifi_was_up = false;
 
     for (;;) {
@@ -481,18 +518,26 @@ static void netTask(void *) {
         wifi_was_up = wifi_up;
 
         if (!wifi_up) {
-            net_state = 0;
+            net_state = 0; inflight_ms = 0;
         } else if (!mqtt.connected()) {
-            net_state = 1;
+            net_state = 1; inflight_ms = 0;
             if (millis() - last_try >= RETRY_MS) { last_try = millis(); if (mqtt_connect()) net_state = 2; }
         } else {
             net_state = 2;
             mqtt.loop();
-            while (aq_tail != aq_head) {                          // send everything waiting
+            if (aq_tail != aq_head) {                             // one message at a time, in order
                 uint32_t t = aq_tail;
-                if (!publish_alert(aq[t % AQ_N])) break;          // keep it, retry next pass
-                sent_boot_ms[t % AQ_N] = millis();
-                __sync_synchronize(); aq_tail = t + 1;
+                if (ack_ok) {
+                    sent_boot_ms[t % AQ_N] = millis(); sent_tries[t % AQ_N] = tries;
+                    Serial.printf("# %s %u acknowledged (try %u)\n", event_name(aq[t % AQ_N]), (unsigned)aq[t % AQ_N].id, tries);
+                    ack_ok = false; inflight_ms = 0; tries = 0;
+                    __sync_synchronize(); aq_tail = t + 1;
+                } else if (!inflight_ms) {
+                    if (publish_alert(aq[t % AQ_N], tries + 1)) { tries++; inflight_ms = millis() ? millis() : 1; }
+                } else if (millis() - inflight_ms >= ACK_TIMEOUT_MS) {
+                    Serial.println("# no ack, reconnecting to send again");
+                    inflight_ms = 0; net.stop();                  // a stalled link needs a new connection
+                }
             }
         }
         vTaskDelay(pdMS_TO_TICKS(50));
@@ -506,7 +551,7 @@ static int current_state(uint32_t t) {
     if (cancel_ms && t - cancel_ms < CANCEL_SHOW_MS) return S_CANCEL;
     if (ok_ms && t - ok_ms < OK_SHOW_MS) return S_OK;
     if (esc_ms && t - esc_ms < ESC_SHOW_MS) return S_ESC;
-    if (aq_head != aq_tail) return S_SENT;                        // alert still waiting to be sent
+    if (aq_head != aq_tail) return S_SENT;                        // not yet acknowledged by the Pi
     uint32_t f = fall_ms;
     if (f) {
         uint32_t dt = t - f;
@@ -554,7 +599,7 @@ static void displayTask(void *) {
                            int left = (CANCEL_WINDOW_MS - (int)(t - fall_ms) + 999) / 1000; if (left < 0) left = 0;
                            snprintf(sub, sizeof sub, "BOOT = cancel   %2d s", left); break; }
             case S_SENT:   bg = RGB565(130, 0, 130); big = "ALERT";
-                           if (aq_head != aq_tail) strcpy(sub, "waiting for network");
+                           if (aq_head != aq_tail) strcpy(sub, "waiting for dashboard");
                            else strcpy(sub, "sent to caregiver");
                            break;
             case S_CANCEL: bg = RGB565(0, 60, 170); big = "CANCELLED"; snprintf(sub, sizeof sub, "no alert sent"); break;

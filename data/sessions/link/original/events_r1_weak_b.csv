@@ -1,0 +1,8 @@
+kind,boot_ms,id,peak_g,p,called,peak,pre_min,pre_std,pre_max,post_dev,post_std,post_max,jerk,gyr_peak,gyr_pre,gyr_post,gyr_post_late,tilt_deg,dur_hi
+START,972,3,,,,,,,,,,,,,,,,,
+IMPACT,7025,1,4.070,0.5820,FALL,4.0702,0.4608,0.6897,4.0482,0.1219,0.3381,2.8336,457.9009,1162.8643,94.5207,108.9813,33.0215,16.5125,0.3992
+ALERT,22056,1,4.070,0.5820,SENT,,,,,,,,,,,,,,
+POSTFALL,67026,1,60.0,0,ESCALATED,0.0,60.0,,,,,,,,,,,,
+ALERT,67037,1,4.070,0.5820,ESC_SENT,60,,,,,,,,,,,,,
+RESOLVE,79713,1,72.7,,BOOT,,,,,,,,,,,,,,
+ALERT,79717,1,4.070,0.5820,OK_SENT,,,,,,,,,,,,,,
