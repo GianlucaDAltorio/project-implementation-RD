@@ -1,0 +1,5 @@
+model,false_alarm_at_5pct_miss,false_alarm_at_10pct_miss,false_alarm_at_15pct_miss
+wrist only,0.077,0.036,0.031
+waist only,0.038,0.012,0.007
+wrist + waist,0.033,0.011,0.006
+wrist + waist + barometer,0.026,0.007,0.003
