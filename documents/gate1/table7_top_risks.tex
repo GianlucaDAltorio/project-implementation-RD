@@ -1,0 +1,23 @@
+% Source file for Table 7.
+% Required in order for the reference in "gate1_report.tex" to work properly.
+
+\begin{table}[!t]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3pt}
+\caption{The two top-ranked risks in full.}
+\label{tab:toprisks}
+\begin{tabularx}{\linewidth}{@{}L{0.14} Y Y@{}}
+\toprule
+Field & R1 & R4 \\
+\midrule
+Statement & Miss or false-alarm targets are not met on new people and sessions. & The broker is unavailable for more than 10\,s, so alerts arrive after 25\,s. \\
+Assumption & A model trained on FallAllD subjects carries over to a new wearer and real movements. & The broker on the laptop is running and reachable whenever the watch has an alert. \\
+Consequence & Frequent false alarms make the wearer stop wearing it (N3), or falls go undetected (N1). & The caregiver is told late (N4, N7) and REQ-FD-02 is missed. \\
+Probability & Almost certain: 11 of 20 and 8 of 10 false alarms on held-out sessions. Misses so far 0 of 20 in round 2. & Unlikely: no unplanned outage in any session; forced outages of 10--20\,s gave 28--61\,s, with every alert delivered (CL11). \\
+Evidence Required & Under 10\% false alarms on 20 held-out non-fall trials with each movement labelled, including a second person. & Delivery times over long sessions with the broker on the machine it would run on in use. \\
+Mitigation & Carry the fused wrist and waist model forward (waist board comparison, Sec.~\ref{sec:feasibility}); add confusable movements to training; label every trial. & Run the broker on an always-on device such as the Pi; keep resend until acknowledged. \\
+\bottomrule
+\end{tabularx}
+\end{table}

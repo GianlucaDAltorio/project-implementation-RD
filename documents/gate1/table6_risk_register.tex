@@ -1,0 +1,24 @@
+% Source file for Table 6.
+% Required in order for the reference in "gate1_report.tex" to work properly.
+
+\begin{table*}[!tb]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3pt}
+\caption{Ranked risks and what changed since the proposal.}
+\label{tab:risks}
+\begin{tabularx}{\linewidth}{@{}l L{0.33} c c c c Y@{}}
+\toprule
+ID & Risk & $p$ & $c$ & $P$ & Rank & Since the proposal \\
+\midrule
+R1 & Miss or false-alarm targets not met on new people and sessions. & 4 & 3 & 12 & 1 & Was likely. False alarms now measured at 55\% (CL3). \\
+R4 & Broker unavailable for more than 10\,s delays alerts past 25\,s. & 2 & 4 & 8 & 2 & New: outage tests gave 28--61\,s (CL11). \\
+R3 & Bluetooth delay exceeds the 200\,ms sub-budget. & 4 & 2 & 8 & 3 & Was unlikely; occurred in the waist board comparison (193--476\,ms). Effect on 25\,s is small. \\
+R7 & An unconscious wearer's wrist does not read as still (worn-wrist noise, being moved), so escalation never fires. & 2 & 3 & 6 & 4 & New: stillness tested only on a dropped watch. Escalation is meant for an unconscious wearer to receive help urgently; one who moves on the ground gets the normal alert. \\
+R5 & Waist board unavailable (battery, reset, link), so the watch falls back to the wrist and false alarms rise. & 3 & 2 & 6 & 5 & New: one 1.2\,s timeout in testing; the board must be still at power-on. \\
+R2 & 60\,s of stillness does not separate incapacitation from rest. & 2 & 2 & 4 & 6 & Was likely. Rest alone cannot escalate: only an uncancelled fall alert starts the check, and the wearer can stop it (CL10). \\
+R6 & Watch restarts while reconnecting to Wi-Fi and loses its session. & 1 & 4 & 4 & Closed & New: one watchdog restart on the weak link; fixed by lowering the network task priority, no restarts in three runs since (\Llinktwo). \\
+\bottomrule
+\end{tabularx}
+\end{table*}

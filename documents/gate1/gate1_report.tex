@@ -1,0 +1,144 @@
+\documentclass[conference]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{float}
+\setlength{\intextsep}{8pt}
+\renewcommand{\dbltopfraction}{0.9}\renewcommand{\dblfloatpagefraction}{0.8}\setcounter{dbltopnumber}{3}
+\renewcommand{\topfraction}{0.9}\renewcommand{\bottomfraction}{0.8}\renewcommand{\textfraction}{0.1}
+
+\graphicspath{{../../figures/generated/}{figures/generated/}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1\linewidth}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% Logbook entries
+\newcommand{\Lfreeze}{L-11}        % proposal frozen, identifiers, criteria and weights
+\newcommand{\Lscore}{L-12}         % concept scoring
+\newcommand{\Ldata}{L-13}          % FallAllD used for training
+\newcommand{\Lmodel}{L-13}         % wrist model v1 and v2 trained, thresholds
+\newcommand{\Lrone}{L-13}          % round 1 trials (v1)
+\newcommand{\Lrtwo}{L-14}          % round 2 trials (v2)
+\newcommand{\Lmqtt}{L-15}          % mqtt implementation and post-fall check trials
+\newcommand{\Llinkone}{L-16}       % strong vs weak link runs
+\newcommand{\Llinktwo}{L-17}       % moderate link and broker outages, offline fusion
+\newcommand{\Lrthree}{L-18}        % worn fusion trials, claim statuses
+\newcommand{\Lall}{L-13 to L-18}   % CL1, present in every entry from 13 to 18
+\newcommand{\Lcost}{L-18}          % watch cost
+\newcommand{\Ladditional}{L-19}    % changelog, risk, and claims
+
+\title{Fall Monitoring System for Elderly Care:\\ Stage 1 Concept and Feasibility Report}
+\author{
+    \IEEEauthorblockN{Gianluca D'Altorio}
+    \IEEEauthorblockA{Department of Computer Engineering Technology\\
+    Vanier College}
+}
+
+\begin{document}
+\maketitle
+
+The proposal (frozen in \Lfreeze) fixed eight provisional requirements, REQ-FD-01 to REQ-FD-08, for a wrist-and-waist fall detector that alerts a caregiver within 25\,s. This report chooses a concept, tests it, and settles each requirement against the evidence. Identifiers continue from the proposal. Claims are numbered CL1, CL2, and so on, because C1 to C4 are already the platform constraints.
+
+% ---------------------------------------------------------------
+\section{Change Log}
+\label{sec:changes}
+
+No requirement number or statement has changed. The rows below are the departures from the proposal.
+
+\input{table1_change_log}
+
+% ---------------------------------------------------------------
+\section{Concept Alternatives}
+\label{sec:concepts}
+
+Three concepts were compared, each failing for a different reason. \textbf{A, watch only:} a classifier on the watch's wrist IMU decides, and the watch sends the alert over Wi-Fi. It fails if arm movements look like falls. \textbf{B, waist board only:} a new board with an IMU and barometer decides and sends the alert over its own Wi-Fi, with no watch. It fails if the new board and its uplink cannot be brought up, and it has no wrist signal. \textbf{C, fusion:} the waist board sends its features to the watch over Bluetooth LE and the watch decides with both. It fails if the Bluetooth link is slow or drops, and it costs the most.
+
+The criteria and weights were written before scoring (\Lfreeze). Scores are 1 to 5, 5 best, and $S_j=\sum_i w_i s_{ij}$ with $\sum_i w_i=1$.
+
+\input{table2_concept_comparison}
+
+\textbf{Why the others lost.} B lost on uncertainty and cost: it needs a new board with its own Wi-Fi firmware and an untried barometer. C lost on delivery, uncertainty and cost: it is the only concept whose decision depends on a Bluetooth hop (R3), and it needs both devices. The A--B margin is small: moving 0.15 of weight from cost to coverage gives A 3.15 and B 3.25. Coverage was scored on assumption, and Sec.~\ref{sec:feasibility} now measures it. Figure~\ref{fig:blocks} shows concept A by function.
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/generated/concept_a_block_diagram.png}
+    \caption{Functional block diagram of concept A (watch only).}
+    \label{fig:blocks}
+\end{figure}
+
+% ---------------------------------------------------------------
+\section{Feasibility Case}
+\label{sec:feasibility}
+
+\textbf{Test conditions.} Classifier: random forest on 14 wrist features in a window from 1\,s before to 2\,s after any impact above 2.5\,g, sampled at 238\,Hz, trained on FallAllD (\Lmodel). Model v1 (threshold 0.26) was used in round 1, v2 (0.30) from round 2 on. One wearer (myself), scripted falls and non-fall movements, each trial marked on the watch with the BOOT button and logged to an SD card. Alert path: watch, MQTT over Wi-Fi, broker on a laptop, Raspberry Pi display. The Pi acknowledges each message and the watch resends until it does. Delivery delay runs from detection on the watch to arrival at the Pi and includes the 15\,s cancel window. All logs and scripts can be found in the project repository.
+
+\input{table3_detection_rounds}
+
+
+\input{table4_feasibility_claims}
+
+\textbf{What the shortfalls mean.} The detection path works and missed no falls in round 2, but false alarms are five times the limit, so concept A as tested cannot meet REQ-FD-04 (CL3). Most false alarms are sharp wrist impacts followed by stillness, which a wrist sensor cannot tell apart from a fall; this is the weakness concept A was scored down for. Delivery is reliable once messages are acknowledged and resent: every alert arrived, and on links that stayed connected all known delays were within 25\,s (CL4). A broker outage longer than the 10\,s margin pushes delivery past 25\,s (CL11, R4).
+
+\textbf{Waist board comparison (not part of concept A).} To check concept C's assumed coverage advantage, I built a breadboard waist board (ESP32, MPU6050 and BMP280) that sends the watch 14 motion features and a barometric height change over Bluetooth LE after each impact. If it does not answer within 1.2\,s, the watch decides with the wrist alone. In offline testing on FallAllD (calculated, leave-one-subject-out, with at most 5\% of falls missed), false alarms were 7.7\% with the wrist alone and 2.6\% with the waist and barometer added. In round 3 (Table~\ref{tab:rounds}), I wore the waist board and the watch logged, for every impact, the probability from the fused model and from the wrist-only model. Both models therefore scored the same 20 non-fall movements: the fused model raised 11 false alarms and the wrist-only model raised 18. These movements were harsher than round 2's, so the two rounds' rates cannot be compared directly. The board-to-watch delay was 193--476\,ms (median 331\,ms for falls, 347\,ms for non-falls). That exceeds the 200\,ms sub-budget in REQ-FD-02's rationale, although it is under 0.5\,s of the 25\,s total. These results are not claims for concept A; they inform the concept choice for Gate 2 (Sec.~\ref{sec:readiness}).
+
+% ---------------------------------------------------------------
+\section{Baselined Requirements}
+\label{sec:baseline}
+
+Every requirement is kept as written. None of the shortfalls comes with a reason from the need to change a number, so each is reported against its original line.
+
+\input{table5_baselined_requirements}
+
+% ---------------------------------------------------------------
+\section{Risk Register}
+\label{sec:risks}
+
+Each risk is ranked by $P = p \times c$, with $p$ from 1 (rare) to 4 (almost certain) and $c$ from 1 (negligible) to 4 (severe); ties break toward the higher consequence (Table~\ref{tab:risks}, Fig.~\ref{fig:matrix}).
+
+\input{table6_risk_register}
+
+\begin{figure}[!t]
+\centering
+\begin{tikzpicture}[x=1.15cm,y=0.42cm,font=\scriptsize]
+  \foreach \p in {1,...,4} {
+    \foreach \c in {1,...,4} {
+      \pgfmathtruncatemacro{\P}{\p*\c}
+      \pgfmathtruncatemacro{\shade}{\P*3}
+      \fill[black!\shade] (\c-1,\p-1) rectangle (\c,\p);
+      \draw (\c-1,\p-1) rectangle (\c,\p);
+      \node[anchor=north east,inner sep=1.5pt] at (\c,\p) {\P};
+    }
+  }
+  \foreach \lab [count=\i] in {Rare,Unlikely,Likely,Almost certain} \node[anchor=east] at (0,\i-0.5) {\lab};
+  \foreach \lab [count=\i] in {Negligible,Moderate,Major,Severe} \node[anchor=north] at (\i-0.5,0) {\lab};
+  \node[rotate=90] at (-2.3,2) {Probability $p$};
+  \node at (2,-1.0) {Consequence $c$};
+  \node[font=\scriptsize\bfseries,fill=white,inner sep=1.5pt] at (2.4,3.5) {R1};
+  \node[font=\scriptsize\bfseries,fill=white,inner sep=1.5pt] at (1.4,3.5) {R3};
+  \node[font=\scriptsize\bfseries,fill=white,inner sep=1.5pt] at (2.4,1.5) {R7};
+  \node[font=\scriptsize\bfseries,fill=white,inner sep=1.5pt] at (1.4,1.5) {R2};
+  \node[font=\scriptsize\bfseries,fill=white,inner sep=1.5pt] at (1.4,2.5) {R5};
+  \node[font=\scriptsize\bfseries,fill=white,inner sep=1.5pt] at (3.4,1.5) {R4};
+  \node[font=\scriptsize,fill=white,inner sep=1.5pt] at (3.4,0.5) {(R6)};
+\end{tikzpicture}
+\caption{Risk matrix. Each cell shows $P = p \times c$; darker cells come first. R6 is closed.}
+\label{fig:matrix}
+\end{figure}
+
+\input{table7_top_risks}
+
+% ---------------------------------------------------------------
+\section{Gate 1 Readiness}
+\label{sec:readiness}
+
+The watch-only concept detects falls and delivers alerts as designed. It raised an alert without input on all link-test triggers (CL1), missed none of 20 worn falls in round 2 (CL2), sent every alert within 25\,s on links that stayed connected (CL4), let the wearer cancel (CL5), escalated after 60\,s of stillness (CL6), and kept its 238\,Hz sampling while doing all of this (CL9). It does not meet the false-alarm requirement: 55\% against a limit of 10\% (CL3), which makes R1 the top risk. The waist board comparison shows that a second sensor removes some of these false alarms (18 to 11 of 20 on the same movements), but not enough, and that its Bluetooth delay exceeds the 200\,ms sub-budget while hardly affecting the 25\,s total. Still open: whether an unconscious wearer's worn wrist reads as still (R7), waist board costs (CL7), and the clean-checkout build (CL8).
+
+I expect \textbf{proceed with conditions}. The evidence supports the alert path and the detection of falls, and it locates the false-alarm problem precisely enough to work on. I would accept these conditions for Gate 2: (1) bring the false-alarm rate under 10\% on 20 labelled held-out non-fall trials, or re-scope, with the coverage criterion re-scored using the measured fusion result; (2) run worn trials lying fully still after a fall, standing in for unconsciousness/incapacitation, to settle R7; (3) repeat the delivery tests at 20 trials per link condition and try shorter Bluetooth connection intervals against the 200\,ms sub-budget; (4) add the waist board receipts and complete a build on a second machine.
+
+\textbf{AI-assisted steps.} An AI assistant wrote most of the testing firmware and scripts, scored the logs and assisted in the creation of this report; I checked every figure against my logs and logbook.
+
+\end{document}

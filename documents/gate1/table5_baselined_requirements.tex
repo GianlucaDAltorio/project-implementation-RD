@@ -1,0 +1,25 @@
+% Source file for Table 5.
+% Required in order for the reference in "gate1_report.tex" to work properly.
+
+\begin{table*}[!tb]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3pt}
+\caption{Baselined requirements. Statements unchanged from the proposal.}
+\label{tab:baseline}
+\begin{tabularx}{\linewidth}{@{}L{0.075} L{0.27} L{0.07} L{0.11} Y@{}}
+\toprule
+ID & Statement & Decision & Status & Reason \\
+\midrule
+REQ-FD-01 & Alert initiated on fall, no wearer action. & Keep & Supported & CL1. \\
+REQ-FD-02 & Alert delivered within 25\,s, including over a degraded link; board-to-watch sub-budget 200\,ms. & Keep & Partly supported & Met on connected links (CL4) at 10 trials, not 20. Outages exceed it (CL11). The 200\,ms board-to-watch sub-budget does not apply to concept A; in the waist board comparison it was exceeded, and faster Bluetooth settings (R3's mitigation) will be tried before any revision. \\
+REQ-FD-03 & Miss rate $\leq$ 5\%. & Keep & Supported & CL2, limited power. \\
+REQ-FD-04 & False-alarm rate $<$ 10\%. & Keep & Unsupported & The need (N3) has not changed, so the limit stays. The design falls short, not the number (CL3). \\
+REQ-FD-05 & Cancel by button within 15\,s. & Keep & Supported & CL5. \\
+REQ-FD-06 & Escalate after 60\,s without post-fall motion. & Keep & Supported & CL6, CL10. Tested on a dropped watch; a worn wrist lying still is to be checked (R7). \\
+REQ-FD-07 & Prototype hardware cost $\leq$ \$200. & Keep & Partly supported & CL7; watch cost calculated but waist board receipts remain outstanding. \\
+REQ-FD-08 & Firmware builds and flashes from a clean checkout, no edits. & Keep & Open & CL8, before Gate 2. \\
+\bottomrule
+\end{tabularx}
+\end{table*}

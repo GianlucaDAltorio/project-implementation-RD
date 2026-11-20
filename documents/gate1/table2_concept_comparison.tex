@@ -1,0 +1,23 @@
+% Source file for Table 2.
+% Required in order for the reference in "gate1_report.tex" to work properly.
+
+\begin{table}[!t]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.1}
+\setlength{\tabcolsep}{4pt}
+\caption{Concept comparison (\Lscore). All scores are assumed. A wins.}
+\label{tab:concepts}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Criterion & $w_i$ & A & B & C \\
+\midrule
+Core requirement coverage (REQ-FD-01 to 06) & 0.30 & 2 & 3 & 4 \\
+Delivery robustness (REQ-FD-02) & 0.25 & 4 & 4 & 2 \\
+Remaining uncertainty (fewer unknowns scores higher) & 0.25 & 4 & 3 & 2 \\
+Cost (prototype hardware) & 0.20 & 5 & 3 & 2 \\
+\midrule
+Total $S_j$ & 1.00 & \textbf{3.60} & 3.25 & 2.60 \\
+\bottomrule
+\end{tabular}
+\end{table}

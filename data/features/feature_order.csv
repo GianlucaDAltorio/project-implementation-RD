@@ -1,0 +1,15 @@
+idx,name
+0,peak
+1,pre_min
+2,pre_std
+3,pre_max
+4,post_dev
+5,post_std
+6,post_max
+7,jerk
+8,gyr_peak
+9,gyr_pre
+10,gyr_post
+11,gyr_post_late
+12,tilt_deg
+13,dur_hi
