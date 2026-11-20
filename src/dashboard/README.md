@@ -3,6 +3,18 @@
 `screen.py` runs on the Raspberry Pi and shows alerts from the watch in the terminal.
 `publisher.py` runs on the laptop and sends test messages to check the broker link.
 
+## Alert path setup
+
+Watch → MQTT over Wi-Fi → Mosquitto broker on the laptop → Raspberry Pi, which subscribes to `pi/dashboard/#` and shows the alert.
+
+1. Broker: in `mosquitto.conf` set `listener 1883` and `allow_anonymous true`, then run `mosquitto -c mosquitto.conf -v`. Allow inbound TCP 1883 in the laptop firewall.
+2. Watch: copy `src/FallDetector_trials/secrets_example.h` to `secrets.h` in the same folder and fill in the Wi-Fi name, password and the laptop's IPv4 address. `secrets.h` is not committed. Build settings are at the top of the sketch.
+3. Pi: the steps below.
+
+After a detected fall the watch waits 15 s for a BOOT cancel, then publishes the alert. It then watches for wrist movement: 60 s in a row with none publishes an escalation. A BOOT press after the alert is sent tells the dashboard the wearer is OK. Message formats are in `src/FallDetector_trials/README.md`.
+
+## Pi
+
 Set `BROKER` in `screen.py` to the laptop's IPv4 address, then on the Pi:
 
     pip install paho-mqtt
