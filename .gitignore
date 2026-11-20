@@ -1,8 +1,11 @@
 __pycache__/
 *.pyc
 src/fall_model/parity_test/harness
+src/fall_model/parity_test/harness_fusion
 data/fallalld/my_subset/
 data/fallalld/my_subset_v2/
+data/fallalld/my_subset_fusion/
 data/fallalld/ActivityID2Str.m
 secrets.h
 alerts_log.csv
+src/fall_model/parity_test/*.exe
