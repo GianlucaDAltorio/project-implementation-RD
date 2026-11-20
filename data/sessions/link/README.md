@@ -23,3 +23,18 @@ and Pi stayed together; only the watch moved.
 
 Run `python src/session_analysis/link_results.py` to rebuild `clean/`. `delay_s` is detection
 to arrival at the Pi and needs NTP time on both; the first r2 fall came before NTP had synced.
+
+## Results
+
+Delay is from detection on the watch to arrival at the Pi and includes the 15 s cancel window.
+
+| Run | Firmware | RSSI (dBm) | Fall alerts delivered | Fall alert delay (s) | Watch restarts |
+| --- | --- | --- | --- | --- | --- |
+| Strong link | no ack | -53 to -71 | 10 of 10 | 15.22-15.38 | 0 |
+| Weak link | no ack | -65 to -78 | 9 of 10 | 15.06-15.53 | 1 |
+| Weak link | ack | -71 to -79 | 10 of 10 | 15.07-24.48 | 1 (watchdog) |
+| Moderate link | ack, watchdog fix | -66 to -74 | 10 of 10 | 15.01-15.08 | 0 |
+| Broker stopped 10-15 s | ack, watchdog fix | -63 to -65 | 5 of 5 | 28.29-40.10 | 0 |
+| Broker suspended about 20 s | ack, watchdog fix | -61 to -70 | 5 of 5 | 34.50-60.76 | 0 |
+
+Without acknowledgements one alert was lost at the weak link. With them every message arrived, including after the broker outages, where delays over 25 s are expected. The watchdog restarts happened while the watch was reconnecting; running the network task at the idle task's priority stopped them.
