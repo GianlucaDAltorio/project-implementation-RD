@@ -13,3 +13,10 @@ Session 002 is one extra recovery trial, run after session 001 to make 5 trials 
 Run `python src/session_analysis/postfall_results.py` to rebuild `clean/`. In session 001, falls 4, 5 and 11
 were mistakes during the session (a second fall triggered while moving, and a trial started
 by accident); both were redone.
+
+## Results
+
+| Trial type | Trials | Result |
+| --- | --- | --- |
+| Still | 5 | 5 escalated, 60.0-70.8 s after detection (60.0 s of stillness each time) |
+| Recovery | 5 | 5 did not escalate |
