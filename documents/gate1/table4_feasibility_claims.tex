@@ -20,8 +20,8 @@ CL5 & REQ-FD-05 & A button press within 15\,s cancels the alert. & Measured & \L
 CL6 & REQ-FD-06 & 60\,s without motion after a fall raises the severity. & Measured & \Lmqtt & Watch dropped and left still: 5 of 5 escalated at 60.0\,s of stillness. Picked up and moved: 5 of 5 did not. Bench trials, not worn. & Supported \\
 CL7 & REQ-FD-07 & Prototype hardware costs at most \$200. & Calculated & \Lcost & Watch \$51.64 (purchased in a group with classmates). Waist board receipts not yet added. & Partly supported \\
 CL8 & REQ-FD-08 & Firmware builds and flashes on a fresh machine with no edits. & Measured & -- & Not yet tried. To check before Gate 2. & Open \\
-CL9 & C4 & The watch runs the classifier in real time. & Measured & \Lrthree & 238.0\,Hz held for 36\,min of raw logs with classifier, Wi-Fi, Bluetooth and SD running; longest gap between samples 7\,ms. & Supported \\
-CL10 & REQ-FD-06, R2 & Rest alone cannot escalate: escalation only follows a fall alert the wearer did not cancel. & Measured & \Lmqtt, \Lrthree & Cancelling ends the post-fall check. Round 3: 31 alarms cancelled (20 falls, 11 false alarms), 0 escalations. After an alert is sent, BOOT (``I'm OK'') stops escalation at any time. & Supported \\
+CL9 & C4 & The watch runs the classifier in real time. & Measured & \Lall & Ran on every trial since round 1. Raw logs from the post-fall, moderate-link and round 3 sessions (57.6\,min): 238.0\,Hz held, longest gap between samples 7\,ms, with Wi-Fi and SD logging running and, in round 3, Bluetooth. & Supported \\
+CL10 & REQ-FD-06, R2 & Rest alone cannot escalate: escalation only follows a fall alert the wearer did not cancel. & Measured & \Lpost & Cancelling ends the post-fall check. Round 3: 31 alarms cancelled (20 falls, 11 false alarms), 0 escalations. After an alert is sent, BOOT (``I'm OK'') stops escalation at any time. & Supported \\
 CL11 & REQ-FD-02 & Alerts still arrive after a broker outage. & Measured & \Llinktwo & Broker stopped 10--15\,s: 5 of 5 delivered, 28--40\,s. Suspended about 20\,s: 5 of 5, 35--61\,s. No restarts. All above 25\,s. & Partly supported \\
 \bottomrule
 \end{tabularx}
