@@ -19,7 +19,7 @@ Fall detection trials (rounds 1 and 2) are in this folder. The post-fall check t
 Round 2 also used the one-FALL-per-trial lockout (extra FALL calls are logged as `suppressed`).
 
 Round 3 was run with the waist board taped to the waist. The waist board
-answered every impact (median reply 340 ms, longest 476 ms), so every decision used the fused model.
+answered every impact (median reply 331 ms for falls and 340 ms for non-falls, longest 476 ms), so every decision used the fused model.
 Each impact row also logs `p_wrist`, the wrist-only model's probability, which `analyze_session.py`
 scores as the `wrist_only` column. The non-fall trials were sitting down hard, swinging the arms hard,
 and hitting the wrist on a table or the side of the body; which trial was which was not recorded.
