@@ -1,0 +1,20 @@
+% Source file for Table 1.
+% Required in order for the reference in "gate1_report.tex" to work properly.
+
+\begin{table}[!t]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3pt}
+\caption{Change log.}
+\label{tab:changes}
+\begin{tabularx}{\linewidth}{@{}L{0.2} Y L{0.12}@{}}
+\toprule
+Item & Change and reason & Entry \\
+\midrule
+Scope: waist IMU and barometer & In scope in the proposal as part of the system. Now tested as a comparison to the chosen watch-only concept (Sec.~\ref{sec:concepts}), not as part of it. Reason: concept A scored highest, and the project requirements ask for claims on one concept, with others allowed as extras. & \Lscore \\
+Training data & Classifiers are trained on the public FallAllD dataset (wrist and waist loggers) instead of my own labelled recordings. My own sessions are used only as held-out tests, so every test is held out by person. Reason: time is limited to record a training set. & \Ldata \\
+Risk register & R1 to R3 re-rated with measured evidence and design checks; R4 to R7 added; R6 closed (Sec.~\ref{sec:risks}). & \Ladditional \\
+\bottomrule
+\end{tabularx}
+\end{table}

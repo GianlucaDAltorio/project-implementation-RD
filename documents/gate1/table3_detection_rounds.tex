@@ -1,0 +1,20 @@
+% Source file for Table 3.
+% Required in order for the reference in "gate1_report.tex" to work properly.
+
+\begin{table*}[!tb]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.1}
+\setlength{\tabcolsep}{4pt}
+\caption{Detection trials on the wearer (measured). Each FALL call inside a trial window counts once. Round 3 is not concept A.}
+\label{tab:rounds}
+\begin{tabularx}{\linewidth}{@{}l l c c Y@{}}
+\toprule
+Round (entry) & Model & Falls detected & Non-fall false alarms & Non-fall movements \\
+\midrule
+1 (\Lrone) & v1, wrist & 19 of 20 & 8 of 10 (80\%) & mixed daily movements \\
+2 (\Lrtwo) & v2, wrist & 20 of 20 & 11 of 20 (55\%) & mixed daily movements \\
+3 (\Lrthree), waist board comparison & fused wrist + waist & 20 of 20 & 11 of 20 (55\%); wrist alone on the same impacts 18 of 20 & sitting down hard, hard arm swings, wrist hitting a table or the body \\
+\bottomrule
+\end{tabularx}
+\end{table*}
