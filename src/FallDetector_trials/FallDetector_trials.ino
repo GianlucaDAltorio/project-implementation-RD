@@ -3,7 +3,12 @@
  * Wrist fall detector for the Waveshare ESP32-S3-Touch-AMOLED-2.06 watch.
  *
  * Core 1 samples the IMU at 238 Hz and runs the fall classifier (fall_detect.c).
- * Core 0 runs the display, the SD card logger and the Wi-Fi/MQTT task.
+ * Core 0 runs the display, the SD card logger, the Wi-Fi/MQTT task and the Bluetooth link
+ * to the waist board (src/WaistBoard).
+ *
+ * After each impact window the watch asks the waist board for its features and decides
+ * with the fused wrist + waist model (fall_model_fusion.h). If the waist board is not
+ * connected or does not answer in time, the wrist-only model (fall_model.h) decides.
  *
  * After a fall the wearer has 15 s to cancel with BOOT. Otherwise an alert goes to the
  * MQTT broker on the laptop. If the wrist then stays still for 60 s, an escalation is
@@ -30,6 +35,7 @@
 #include "esp_system.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <BLEDevice.h>
 #include <time.h>
 #include <sys/time.h>
 #include "secrets.h"
@@ -40,6 +46,7 @@ extern "C" {
 static void displayTask(void *);
 static void sdTask(void *);
 static void netTask(void *);
+static void bleTask(void *);
 
 // Pins, as in Waveshare's pin_config.h
 #define IMU_SDA 15
@@ -84,6 +91,14 @@ static void netTask(void *);
 #define MSG_OFFLINE  "{\"device\":\"" DEVICE_ID "\",\"event\":\"status\",\"msg\":\"" DEVICE_ID " OFFLINE\"}"
 #define TOPIC_ACK    "pi/dashboard/ack"
 #define RETRY_MS     2000       // wait between broker reconnect attempts
+
+// Waist board link; names must match src/WaistBoard/WaistBoard.ino
+#define USE_WAIST    1          // 0 = always decide with the wrist-only model
+#define WB_NAME      "FallWaist"
+#define WB_SERVICE   "930fee35-698a-4c8e-8888-387e4d8b6a76"
+#define WB_REQ       "930fee35-698a-4c8e-8888-387e4d8b6a77"
+#define WB_FEAT      "930fee35-698a-4c8e-8888-387e4d8b6a78"
+#define WB_TIMEOUT_MS 1200      // wait this long for the waist features, then use the wrist model
 #define ACK_TIMEOUT_MS 3000     // no ack by then: reconnect and send again
 
 Arduino_DataBus *bus = new Arduino_ESP32QSPI(LCD_CS, LCD_SCLK, LCD_SDIO0, LCD_SDIO1, LCD_SDIO2, LCD_SDIO3);
@@ -95,7 +110,7 @@ static const double PERIOD_US = 1000000.0 / FD_FS;
 static double next_us;
 
 // State shared between cores (written by core 1, read by core 0)
-struct Ev { uint32_t id, sec; float peak, p; bool fall; };
+struct Ev { uint32_t id, sec; float peak, p; bool fall; char model; };
 static Ev events[4];
 static volatile uint32_t ev_count = 0;       // impact windows evaluated
 static volatile uint32_t n_falls = 0, n_marks = 0;
@@ -113,7 +128,7 @@ struct __attribute__((packed)) Rec { uint32_t t_ms; int16_t v[6]; };   // 16 byt
 static Rec rawbuf[RAW_N];
 static volatile uint32_t raw_head = 0, raw_tail = 0, raw_drop = 0;
 #define EVQ_N 16
-static char evq[EVQ_N][220];
+static char evq[EVQ_N][420];
 static volatile uint32_t evq_head = 0, evq_tail = 0;
 static volatile int sd_state = 0;            // 0 starting, 1 logging, 2 no card / error
 static volatile uint32_t sd_session = 0, sd_kb = 0;
@@ -131,6 +146,17 @@ static Alert cur_fall;                       // the fall in its cancel window (c
 static bool cur_queued = true;
 static volatile int net_state = 0;           // 0 joining Wi-Fi, 1 Wi-Fi ok / broker down, 2 broker ok
 static uint16_t boot_id = 0;                 // random per power-up, part of each alert id
+
+// Waist board link: core 1 asks, the Bluetooth task answers
+static volatile int wb_state = 0;            // 0 searching, 1 connected
+static volatile bool wb_req_pending = false;
+static volatile uint32_t wb_req_id = 0, wb_req_peak_ms = 0, wb_resp_id = 0;
+static volatile int wb_resp_status = -1;     // 0 ok, 1 window not in the waist buffer
+static float wb_resp[15];                    // 14 waist features + height change (m)
+
+// Impact window waiting for the waist features (core 1)
+struct Pending { bool active, asked; uint32_t id, t0; float w[14], p_wrist, peak; };
+static Pending pw;
 
 // Post-fall check state (written by core 1, read by the display)
 static volatile bool pf_active = false;
@@ -187,19 +213,70 @@ static void postfall_sample(float a, float g) {      // called for every IMU sam
     blk_amin = 99; blk_amax = 0; blk_gsum = 0; blk_n = 0;
 }
 
-static void on_fall_detected() {
+static void on_fall_detected(float p, float peak) {
     if (pf_active) postfall_end("REPLACED");
     resp_open = false;
     n_falls++;
     cancel_ms = 0;
     uint32_t m = millis(); fall_ms = m ? m : 1;
     cur_fall.id = n_falls; cur_fall.detect_boot_ms = m; cur_fall.detect_epoch_ms = epoch_ms();
-    cur_fall.p = fd.last_prob; cur_fall.peak = fd.last_peak_g;
+    cur_fall.p = p; cur_fall.peak = peak;
     cur_fall.kind = A_FALL; cur_fall.still_s = 0;
     cur_queued = false;                      // queued when the cancel window ends
     pf_start_ms = pf_last_move_ms = m; pf_move_s = 0; esc_ms = ok_ms = 0;
     pf_active = true;
-    Serial.printf("FALL DETECTED  (p=%.2f, total=%u, t=%lu ms)\n", fd.last_prob, (unsigned)n_falls, (unsigned long)millis());
+    Serial.printf("FALL DETECTED  (p=%.2f, total=%u, t=%lu ms)\n", p, (unsigned)n_falls, (unsigned long)millis());
+}
+
+// A window was evaluated by the wrist model: ask the waist board, decide later
+static void start_window() {
+    pw.active = true; pw.id = fd.n_eval; pw.t0 = millis();
+    memcpy(pw.w, fd.last_feat, sizeof pw.w); pw.p_wrist = fd.last_prob; pw.peak = fd.last_peak_g;
+    pw.asked = USE_WAIST && wb_state == 1 && !wb_req_pending;
+    if (pw.asked) {
+        wb_req_id = pw.id;
+        wb_req_peak_ms = pw.t0 - (uint32_t)((FD_POST - 1) * 1000L / FD_FS);   // the window ends 2 s after the peak
+        __sync_synchronize(); wb_req_pending = true;
+    }
+}
+
+// model: F fused, W wrist (waist not connected), T wrist (no answer in time), B wrist (window not in the waist buffer)
+static void decide(char model, const float *z) {
+    pw.active = false;
+    float p = model == 'F' ? fd_predict_fusion(pw.w, z) : pw.p_wrist;
+    float thr = model == 'F' ? fd_threshold_fusion() : fd_threshold();
+    int fell = p >= thr;
+    bool suppressed = false;
+    if (fell && last_label != 0 && millis() - trial_start_ms < TRIAL_WINDOW_MS) {
+        if (trial_fall_called) { fell = 0; suppressed = true; }    // one FALL per trial window
+        else trial_fall_called = true;
+    }
+    uint32_t id = ev_count + 1;
+    Ev &e = events[ev_count % 4];
+    e.id = id; e.sec = millis() / 1000; e.peak = pw.peak; e.p = p; e.fall = fell != 0; e.model = model;
+    char line[420];
+    int n = snprintf(line, sizeof line, "IMPACT,%lu,%u,%.3f,%.4f,%s", (unsigned long)millis(), (unsigned)id,
+                     pw.peak, p, fell ? "FALL" : suppressed ? "suppressed" : "ignored");
+    for (int k = 0; k < 14; k++) n += snprintf(line + n, sizeof line - n, ",%.4f", pw.w[k]);
+    n += snprintf(line + n, sizeof line - n, ",%c,%.4f", model, pw.p_wrist);
+    for (int k = 0; k < 15; k++) n += model == 'F' ? snprintf(line + n, sizeof line - n, ",%.4f", z[k]) : snprintf(line + n, sizeof line - n, ",");
+    snprintf(line + n, sizeof line - n, ",%lu", (unsigned long)(millis() - pw.t0));
+    log_line(line);
+    ev_count = id;
+    Serial.printf("# impact #%u %.1f g  p=%.2f (%c, wrist %.2f)  %s\n", (unsigned)id, pw.peak, p, model, pw.p_wrist,
+                  fell ? "FALL" : suppressed ? "suppressed" : "ignored");
+    if (fell) on_fall_detected(p, pw.peak);
+}
+
+static void try_decide() {
+    if (!pw.asked) { decide('W', nullptr); return; }
+    if (wb_resp_id == pw.id && !wb_req_pending) {
+        static float z[15];
+        memcpy(z, wb_resp, sizeof z);
+        if (wb_resp_status == 0) decide('F', z); else decide('B', nullptr);
+    } else if (millis() - pw.t0 > WB_TIMEOUT_MS) {
+        decide('T', nullptr);
+    }
 }
 
 static void emit_mark(uint32_t t_ms, bool is_fall_trial) {
@@ -247,6 +324,9 @@ void setup() {
     xTaskCreatePinnedToCore(sdTask, "sd", 8192, NULL, 1, NULL, 0);
     xTaskCreatePinnedToCore(displayTask, "disp", 8192, NULL, 1, NULL, 0);
     xTaskCreatePinnedToCore(netTask, "net", 8192, NULL, 0, NULL, 0);   // same priority as the idle task, see README
+#if USE_WAIST
+    xTaskCreatePinnedToCore(bleTask, "ble", 8192, NULL, 0, NULL, 0);
+#endif
 
     next_us = (double)esp_timer_get_time() + PERIOD_US;
     last_pub_us = last_status_us = esp_timer_get_time();
@@ -277,25 +357,12 @@ void loop() {
             sum_a += amag; sum_g += gmag;
             postfall_sample(amag, gmag);
             n_samples++;
-            int fell = fd_push(&fd, ax, ay, az, gx, gy, gz);
-            bool suppressed = false;
-            if (fell && last_label != 0 && millis() - trial_start_ms < TRIAL_WINDOW_MS) {
-                if (trial_fall_called) { fell = 0; suppressed = true; }   // one FALL per trial window
-                else trial_fall_called = true;
-            }
+            fd_push(&fd, ax, ay, az, gx, gy, gz);
             if (fd.n_eval != seen_eval) {                       // a window was just evaluated
                 seen_eval = fd.n_eval;
-                uint32_t id = ev_count + 1;
-                Ev &e = events[ev_count % 4];
-                e.id = id; e.sec = millis() / 1000; e.peak = fd.last_peak_g; e.p = fd.last_prob; e.fall = fell != 0;
-                char line[220]; int n = snprintf(line, sizeof line, "IMPACT,%lu,%u,%.3f,%.4f,%s", (unsigned long)millis(), (unsigned)id,
-                                                 fd.last_peak_g, fd.last_prob, fell ? "FALL" : suppressed ? "suppressed" : "ignored");
-                for (int k = 0; k < 14 && n < (int)sizeof line - 16; k++) n += snprintf(line + n, sizeof line - n, ",%.4f", fd.last_feat[k]);
-                log_line(line);
-                ev_count = id;
-                Serial.printf("# impact #%u %.1f g  p=%.2f  %s\n", (unsigned)id, e.peak, e.p, fell ? "FALL" : suppressed ? "suppressed" : "ignored");
+                if (pw.active) decide('T', nullptr);            // previous one still waiting
+                start_window();
             }
-            if (fell) on_fall_detected();
         } else {
             read_fail++;
         }
@@ -303,6 +370,7 @@ void loop() {
         guard++;
     }
     if (guard >= 8) next_us = (double)now + PERIOD_US;
+    if (pw.active) try_decide();
 
     // BOOT button: cancel, or 1 press = fall trial, 2 presses = non-fall trial, hold = void
     bool b = digitalRead(BOOT_BTN) == LOW;
@@ -414,7 +482,9 @@ static void sdTask(void *) {
 #else
     if (!fe) { sd_state = 2; Serial.println("# SD: cannot create file"); vTaskDelete(NULL); return; }
 #endif
-    fe.print("kind,boot_ms,id,peak_g,p,called,peak,pre_min,pre_std,pre_max,post_dev,post_std,post_max,jerk,gyr_peak,gyr_pre,gyr_post,gyr_post_late,tilt_deg,dur_hi\n");
+    fe.print("kind,boot_ms,id,peak_g,p,called,peak,pre_min,pre_std,pre_max,post_dev,post_std,post_max,jerk,gyr_peak,gyr_pre,gyr_post,gyr_post_late,tilt_deg,dur_hi,"
+             "model,p_wrist,z_peak,z_pre_min,z_pre_std,z_pre_max,z_post_dev,z_post_std,z_post_max,z_jerk,z_gyr_peak,z_gyr_pre,z_gyr_post,"
+             "z_gyr_post_late,z_tilt_deg,z_dur_hi,dh_m,wait_ms\n");
     fe.printf("START,%lu,%u,,,%s,,,,,,,,,,,,,,\n", (unsigned long)millis(), (unsigned)n, reset_reason());
     fe.flush();
     sd_session = n; sd_state = 1;
@@ -544,6 +614,66 @@ static void netTask(void *) {
     }
 }
 
+// Waist board link (core 0): find it, connect, and fetch features when core 1 asks
+static void bleTask(void *) {
+    BLEDevice::init(DEVICE_ID);
+    BLEDevice::setMTU(185);
+    BLEScan *scan = BLEDevice::getScan();
+    scan->setActiveScan(true);
+    BLEClient *client = BLEDevice::createClient();
+    BLERemoteCharacteristic *req = nullptr, *feat = nullptr;
+    for (;;) {
+        if (!client->isConnected()) {
+            wb_state = 0; wb_req_pending = false;
+            BLEScanResults *res = scan->start(2, false);
+            int found = -1;
+            for (int i = 0; res && i < res->getCount(); i++) {
+                BLEAdvertisedDevice d = res->getDevice(i);
+                if (d.haveServiceUUID() && d.isAdvertisingService(BLEUUID(WB_SERVICE))) { found = i; break; }
+            }
+            if (found >= 0) {
+                BLEAdvertisedDevice d = res->getDevice(found);
+                if (client->connect(&d)) {
+                    BLERemoteService *svc = client->getService(WB_SERVICE);
+                    req = svc ? svc->getCharacteristic(WB_REQ) : nullptr;
+                    feat = svc ? svc->getCharacteristic(WB_FEAT) : nullptr;
+                    if (req && feat) { wb_state = 1; Serial.println("# waist board connected"); }
+                    else client->disconnect();
+                }
+            }
+            scan->clearResults();
+            if (wb_state != 1) vTaskDelay(pdMS_TO_TICKS(1000));
+            continue;
+        }
+        if (wb_req_pending) {
+            uint32_t id = wb_req_id;
+            char msg[32];
+            snprintf(msg, sizeof msg, "%u,%lu", (unsigned)id, (unsigned long)(millis() - wb_req_peak_ms));
+            int status = -1;
+            if (req->writeValue((uint8_t *)msg, strlen(msg), true)) {
+                for (int t = 0; t < 40 && status < 0; t++) {             // up to about 1 s; the board
+                    vTaskDelay(pdMS_TO_TICKS(25));                       // waits until its window is complete
+                    String v = feat->readValue();
+                    unsigned rid; int st, used = 0;
+                    if (sscanf(v.c_str(), "%u,%d%n", &rid, &st, &used) == 2 && rid == id) {
+                        status = st;
+                        const char *q = v.c_str() + used;
+                        for (int k = 0; k < 15 && st == 0; k++) {
+                            if (*q != ',') { status = 1; break; }
+                            wb_resp[k] = strtof(q + 1, (char **)&q);   // "nan" parses to NaN
+                        }
+                    }
+                }
+            }
+            wb_resp_status = status;
+            __sync_synchronize();
+            if (status >= 0) wb_resp_id = id;                     // no answer: core 1 times out
+            wb_req_pending = false;
+        }
+        vTaskDelay(pdMS_TO_TICKS(5));
+    }
+}
+
 // Display (core 0)
 enum { S_READY, S_CHECK, S_FALL, S_SENT, S_CANCEL, S_WATCH, S_ESC, S_OK };
 
@@ -623,13 +753,13 @@ static void displayTask(void *) {
         snprintf(b, sizeof b, "|a| %5.2f g   ", (float)live_a);  put(3, 20, 212, 3, RGB565_WHITE, RGB565_BLACK, b);
         snprintf(b, sizeof b, "|g| %5.1f dps ", (float)live_g);  put(4, 20, 244, 3, RGB565_WHITE, RGB565_BLACK, b);
 
-        snprintf(b, sizeof b, "IMPACTS (fall if p>=%.2f)", fd_threshold());
+        snprintf(b, sizeof b, "IMPACTS  F>=%.2f W>=%.2f", fd_threshold_fusion(), fd_threshold());
         put(5, 20, 285, 2, RGB565_CYAN, RGB565_BLACK, b);
         uint32_t n = ev_count;
         for (int i = 0; i < 4; i++) {
             if (n > (uint32_t)i) {
                 Ev e = events[(n - 1 - i) % 4];
-                snprintf(b, sizeof b, "#%-3u %4us %4.1fg p=%.2f %-6s ", (unsigned)e.id, (unsigned)e.sec, e.peak, e.p, e.fall ? "FALL" : "ignore");
+                snprintf(b, sizeof b, "#%-3u %4us %4.1fg p=%.2f %c %-6s ", (unsigned)e.id, (unsigned)e.sec, e.peak, e.p, e.model, e.fall ? "FALL" : "ignore");
                 put(6 + i, 20, 313 + i * 28, 2, e.fall ? RGB565_RED : RGB565_WHITE, RGB565_BLACK, b);
             } else {
                 put(6 + i, 20, 313 + i * 28, 2, RGB565_DARKGREY, RGB565_BLACK, "-                       ");
@@ -637,7 +767,7 @@ static void displayTask(void *) {
         }
         const char *sds = sd_state == 1 ? "ok" : (sd_state == 2 ? "NONE" : "...");
         const char *ns = net_state == 2 ? "ok" : (net_state == 1 ? "--" : "W?");
-        snprintf(b, sizeof b, "trials:%u SD:%s %uKB MQ:%s  ", (unsigned)n_marks, sds, (unsigned)sd_kb, ns);
+        snprintf(b, sizeof b, "tr:%u SD:%s %uKB MQ:%s WB:%s  ", (unsigned)n_marks, sds, (unsigned)sd_kb, ns, wb_state == 1 ? "ok" : "--");
         put(10, 20, 436, 2, sd_state == 2 ? RGB565_RED : RGB565_WHITE, RGB565_BLACK, b);
         snprintf(b, sizeof b, "falls:%u up:%lus %3.0fHz drop:%u  ", (unsigned)n_falls, (unsigned long)(t / 1000), (float)live_rate, (unsigned)raw_drop);
         put(11, 20, 466, 2, RGB565_DARKGREY, RGB565_BLACK, b);

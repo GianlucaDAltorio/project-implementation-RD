@@ -6,6 +6,7 @@ but the fall/no-fall decision must match. Needs gcc and the FallAllD subset.
 
 Usage: python parity_check.py
 """
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -18,8 +19,10 @@ FW = ROOT / "src" / "FallDetector_trials"
 SUBSET = ROOT / "data" / "fallalld" / "my_subset_v2"
 EXE = Path(__file__).resolve().parent / "harness"
 
+if shutil.which("gcc") is None:
+    sys.exit("gcc not found on PATH; install it (see README) and open a new terminal")
 subprocess.run(["gcc", "-O2", "-std=c99", f"-I{FW}", str(Path(__file__).with_name("harness.c")),
-                str(FW / "fall_detect.c"), "-lm", "-o", str(EXE)], check=True)
+                str(FW / "fall_detect.c"), str(FW / "fd_features.c"), "-lm", "-o", str(EXE)], check=True)
 
 ref = pd.read_csv(ROOT / "data" / "features" / "py_reference.csv")
 names = pd.read_csv(ROOT / "data" / "features" / "feature_order.csv").name.tolist()

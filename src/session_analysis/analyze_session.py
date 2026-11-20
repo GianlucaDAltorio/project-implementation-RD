@@ -4,10 +4,13 @@ One BOOT press marks a real-fall trial, two mark a non-fall trial. A FALL call i
 trial window counts as detected (fall trial) or a false alarm (non-fall trial). The
 window is 15 s, or 30 s for the round-1 sessions in WINDOW_S.
 
+Sessions run with the waist board also log p_wrist, the wrist-only model's probability for
+the same impact, so the wrist_only column shows what the watch alone would have decided.
+
 Usage: python analyze_session.py [events.csv ...] [--notes notes.csv] [--window 15] [--void N ...]
 With no files, every *_clean.csv in data/sessions/clean is scored.
 """
-import argparse, sys
+import argparse, re, sys
 from pathlib import Path
 import pandas as pd
 
@@ -15,7 +18,10 @@ ap = argparse.ArgumentParser()
 ap.add_argument("events", nargs="*"); ap.add_argument("--notes"); ap.add_argument("--window", type=float)
 ap.add_argument("--void", type=int, nargs="*", default=[])
 args = ap.parse_args()
-CLEAN = Path(__file__).resolve().parents[2] / "data" / "sessions" / "clean"
+ROOT = Path(__file__).resolve().parents[2]
+CLEAN = ROOT / "data" / "sessions" / "clean"
+WRIST_THR = float(re.search(r"FM_THRESHOLD ([0-9.]+)f",
+                            (ROOT / "src" / "FallDetector_trials" / "fall_model.h").read_text()).group(1))
 files = args.events or sorted(CLEAN.glob("*_clean.csv"))
 if not files:
     sys.exit(f"no *_clean.csv files found in {CLEAN}")
@@ -58,11 +64,16 @@ def score(path):
         is_fall = str(m.called).strip().upper() == "FALLTRIAL"
         imp = impacts[(impacts.boot_ms >= t0) & (impacts.boot_ms < t1)]
         called = int(inwin.sum())
+        wrist = None
+        if "p_wrist" in imp and imp.p_wrist.notna().any():
+            hit = bool((imp.p_wrist >= WRIST_THR).any())
+            wrist = ("detected" if hit else "MISSED") if is_fall else ("FALSE ALARM" if hit else "correct")
         rows.append(dict(file=Path(path).name, trial=int(m.mark), type="REAL FALL" if is_fall else "NON-FALL",
                          note=notes.get(int(m.mark), ""), impacts=len(imp),
                          max_p=round(float(imp.p.max()), 2) if len(imp) else None, fall_calls=called,
                          repeat_calls=max(called - 1, 0),
-                         result=("detected" if called else "MISSED") if is_fall else ("FALSE ALARM" if called else "correct")))
+                         result=("detected" if called else "MISSED") if is_fall else ("FALSE ALARM" if called else "correct"),
+                         wrist_only=wrist))
     return pd.DataFrame(rows), int((~covered).sum()), int((ev.kind == "CANCEL").sum())
 
 
@@ -71,6 +82,10 @@ def summary(r, outside=None, cancels=None):
     miss, fa = int((r.result == "MISSED").sum()), int((r.result == "FALSE ALARM").sum())
     print(f"REAL FALL trials: {nf}   missed: {miss}" + (f"   miss rate: {miss/nf:.1%}   (target <= 5%)" if nf else ""))
     print(f"NON-FALL trials:  {nn}   false alarms: {fa}" + (f"   false-alarm rate: {fa/nn:.1%}   (target < 10%)" if nn else ""))
+    if "wrist_only" in r and r.wrist_only.notna().any():
+        w = r[r.wrist_only.notna()]
+        print(f"wrist model alone on the same impacts: missed {int((w.wrist_only == 'MISSED').sum())}, "
+              f"false alarms {int((w.wrist_only == 'FALSE ALARM').sum())}")
     print(f"extra (repeat) FALL calls inside trials: {int(r.repeat_calls.sum())}")
     if outside is not None: print(f"FALL calls outside every trial window: {outside}   cancel presses: {cancels}")
 
@@ -80,6 +95,7 @@ for f in files:
     r, outside, cancels = score(f)
     if r.empty: print(f"{f}: every trial was voided"); continue
     if not r.note.any(): r = r.drop(columns="note")
+    if r.wrist_only.isna().all(): r = r.drop(columns="wrist_only")
     print(f"\n=== {Path(f).name} ===")
     print(r.drop(columns="file").to_string(index=False)); print()
     summary(r, outside, cancels)

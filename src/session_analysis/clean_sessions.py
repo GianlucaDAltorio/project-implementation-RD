@@ -20,6 +20,8 @@ SESSIONS = {
     "events_001.csv": {"void": [16], "window_s": 30},   # trial 16: accidental double press
     "events_002.csv": {"void": [], "window_s": 30},
     "r2_events_001.csv": {"void": [12, 44]},
+    "r3_events_001.csv": {"void": []},
+    "r3_events_002.csv": {"void": [16]},               # trial 16: fall mark pressed by mistake
 }
 
 
